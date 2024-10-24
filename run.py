@@ -8,6 +8,7 @@ from src.dataset_utils import (
     get_singleview_data,
     get_multiview_data,
     get_voxel_data_json,
+    get_image_transform_latent_model,
 )
 from src.model_utils import Model
 import argparse
@@ -43,12 +44,17 @@ def add_args(parser):
         "--model_name",
         type=str,
         default="./checkpoint.ckpt",
-        choices=["ADSKAILab/Make-A-Shape-single-view-20m",
-                "ADSKAILab/Make-A-Shape-multi-view-20m",
-                "ADSKAILab/Make-A-Shape-voxel-16res-20m",
-                "ADSKAILab/Make-A-Shape-voxel-32res-20m",
-                "ADSKAILab/Make-A-Shape-voxel-16res-20m"
-        ],
+        # choices=["ADSKAILab/WaLa-SV-1B",
+        #         "ADSKAILab/WaLa-SK-1B",
+        #         "ADSKAILab/WaLa-UN-1B",
+        #         "ADSKAILab/WaLa-MVDream-DM6",
+        #         "ADSKAILab/WaLa-MVDream-RGB4",
+        #         "ADSKAILab/WaLa-DM4-1B",
+        #         "ADSKAILab/WaLa-DM6-1B",
+        #         "ADSKAILab/WaLa-VX16-1B",
+        #         "ADSKAILab/WaLa-PC-1B",
+        #         "ADSKAILab/WaLa-RGB4-1B"
+        # ],
         help="Model name (default: %(default)s).",
     )
     parser.add_argument(
@@ -126,12 +132,8 @@ if __name__ == "__main__":
 
     print(f"Loading model")
     model = Model.from_pretrained(pretrained_model_name_or_path=args.model_name)
-
-    if hasattr(model, "image_transform"):
-        image_transform = model.image_transform
-    else:
-        image_transform = None
-
+    image_transform = get_image_transform_latent_model()
+    
     if args.images:
         for image_path in args.images:
             print(f"Processing image: {image_path}")

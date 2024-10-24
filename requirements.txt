@@ -20,3 +20,4 @@ seaborn
 scikit-image
 huggingface_hub
 dinov2
+backoff
