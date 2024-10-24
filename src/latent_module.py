@@ -449,14 +449,30 @@ class Trainer_Condition_Network(pl.LightningModule):
             )
             img_idx = self.extract_img_idx(data, data_idx=data_idx)
 
-        latent = self.network.inference(
-            condition_features.size(0),
-            condition_features,
-            scale=self.args.scale,
-            image_index=img_idx,
-        )
+            latent = self.network.inference(
+                condition_features.size(0),
+                condition_features,
+                scale=self.args.scale,
+                image_index=img_idx,
+            )
+        elif (
+            hasattr(self.args, "use_voxel_conditions")
+            and self.args.use_voxel_conditions
+        ):
+            condition_features = self.extract_input_features(
+                data, data_type="voxels", is_train=False, to_cuda=True
+            )
+            latent = self.network.inference(
+                low_data[data_idx : data_idx + 1],
+                condition_features[data_idx : data_idx + 1],
+                None,
+                local_rank=0,
+                current_stage=self.current_stage,
+                return_wavelet_volume=return_wavelet_volume,
+                progress=progress,
+            )
+        
         pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
-
         wavelet_data_pred = WaveletData(
             shape_list=self.dwt_sparse_composer.shape_list,
             output_stage=self.args.max_training_level,
