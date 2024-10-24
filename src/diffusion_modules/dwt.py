@@ -9,7 +9,7 @@ import time
 import pywt
 
 ### modify from https://github.com/fbcotter/pytorch_wavelets/blob/master/pytorch_wavelets/dwt/lowlevel.py
-from src.networks.diffusion_modules.dwt_utils import (
+from src.diffusion_modules.dwt_utils import (
     prep_filt_sfb3d,
     prep_filt_afb3d,
 )

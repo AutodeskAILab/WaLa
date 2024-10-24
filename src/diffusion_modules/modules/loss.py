@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-import src.networks.diffusion_modules.modules.functional as F
+import src.diffusion_modules.modules.functional as F
 
 __all__ = ["KLLoss"]
 

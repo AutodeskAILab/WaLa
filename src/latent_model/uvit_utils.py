@@ -17,7 +17,7 @@ from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 
 from typing import Final
 import torch.nn.functional as F
-from build3d.models.latent_model.dit_utils import (
+from src.latent_model.dit_utils import (
     DiT,
     Global_Proj_Layer,
     TimestepEmbedder,

@@ -3,8 +3,8 @@ import functools
 import torch.nn as nn
 import torch
 import numpy as np
-from src.networks.diffusion_modules.latent_points import CrossAttention
-from src.networks.diffusion_modules.modules import (
+from src.diffusion_modules.latent_points import CrossAttention
+from src.diffusion_modules.modules import (
     SharedMLP,
     PVConv,
     PointNetSAModule,

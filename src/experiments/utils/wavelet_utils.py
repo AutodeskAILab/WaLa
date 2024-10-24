@@ -376,6 +376,19 @@ def extract_highs_from_values(high_indices, high_values, max_depth, shape_list):
     return highs_recon
 
 
+def pad_with_batch_idx(tensor):
+    batch_size = tensor.size(0)
+    padding_tensor = (
+        torch.arange(batch_size, device=tensor.device)
+        .long()
+        .unsqueeze(1)
+        .repeat(1, tensor.size(1))
+        .unsqueeze(2)
+    )
+    padded_tensor = torch.cat((padding_tensor, tensor), dim=-1)
+    return padded_tensor
+
+
 def create_coordinates(resolution, space_range, channel_dim=7):
     channels_samples = np.linspace(0, channel_dim - 1, channel_dim)
     dimensions_samples = np.linspace(space_range[0], space_range[1], resolution)

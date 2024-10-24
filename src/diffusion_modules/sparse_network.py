@@ -6,7 +6,7 @@ import pywt
 from spconv.core import AlgoHint, ConvAlgo
 import spconv.pytorch as spconv
 from spconv.pytorch.hash import HashTable
-from src.networks.diffusion_modules.dwt_utils import (
+from src.diffusion_modules.dwt_utils import (
     prep_filt_sfb3d,
     prep_filt_afb3d,
 )

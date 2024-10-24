@@ -6,7 +6,7 @@ import pywt
 from spconv.core import AlgoHint, ConvAlgo
 import spconv.pytorch as spconv
 from spconv.pytorch.hash import HashTable
-from build3d.models.latent_model.diffusion_modules.dwt_utils import prep_filt_sfb3d, prep_filt_afb3d
+from src.latent_model.diffusion_modules.dwt_utils import prep_filt_sfb3d, prep_filt_afb3d
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 

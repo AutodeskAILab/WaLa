@@ -5,21 +5,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from abc import abstractmethod
-from build3d.models.diffusion_modules.fp16_util import (
+from src.diffusion_modules.fp16_util import (
     convert_module_to_f16,
     convert_module_to_f32,
 )
-from build3d.models.latent_model.gaussian_diffusion import (
+from src.latent_model.gaussian_diffusion import (
     GaussianDiffusion,
     SpacedDiffusion,
     get_named_beta_schedule,
     space_timesteps,
 )
-from build3d.models.diffusion_modules.resample import (
+from src.diffusion_modules.resample import (
     UniformSampler,
     LossSecondMomentResampler,
 )
-from build3d.models.diffusion_modules.nn import (
+from src.diffusion_modules.nn import (
     SiLU,
     conv_nd,
     linear,
@@ -29,9 +29,9 @@ from build3d.models.diffusion_modules.nn import (
     timestep_embedding,
     checkpoint,
 )
-from build3d.models.latent_model.utils import *
-from build3d.models.latent_model.dit_utils import DiT
-from build3d.models.latent_model.uvit_utils import Latent_UVIT
+from src.latent_model.utils import *
+from src.latent_model.dit_utils import DiT
+from src.latent_model.uvit_utils import Latent_UVIT
 
 # Main Model
 

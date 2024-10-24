@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.autograd import Function
 
-from src.networks.diffusion_modules.modules.functional.backend import (
+from src.diffusion_modules.modules.functional.backend import (
     _backend,
 )
 

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import src.networks.diffusion_modules.modules.functional as PF
+import src.diffusion_modules.modules.functional as PF
 
 __all__ = ["FrustumPointNetLoss", "get_box_corners_3d"]
 

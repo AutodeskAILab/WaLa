@@ -7,20 +7,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from build3d.models.latent_model.quantize import VectorQuantizer2
-from build3d.models.diffusion_modules.dwt import DWTInverse3d
-from build3d.models.diffusion_modules.sparse_network import SparseComposer
-from build3d.experiments.utils.wavelet_utils import (
+from src.latent_model.quantize import VectorQuantizer2
+from src.diffusion_modules.dwt import DWTInverse3d
+from src.diffusion_modules.sparse_network import SparseComposer
+from src.experiments.utils.wavelet_utils import (
     extract_wavelet_coefficients,
     extract_full_indices,
     extract_highs_from_values,
     pad_with_batch_idx,
 )
-from build3d.models.latent_model.abstract_volume_nn import (
+from src.latent_model.abstract_volume_nn import (
     General_Decoder_Up_2,
     General_Encoder_Down_2,
 )
-from build3d.experiments.utils.wavelet_utils import WaveletData
+from src.experiments.utils.wavelet_utils import WaveletData
 
 
 def mean_flat(tensor):

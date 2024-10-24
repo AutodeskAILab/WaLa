@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
-import src.networks.diffusion_modules.modules.functional as F
-from src.networks.diffusion_modules.modules.ball_query import BallQuery
-from src.networks.diffusion_modules.modules.shared_mlp import SharedMLP
+import src.diffusion_modules.modules.functional as F
+from src.diffusion_modules.modules.ball_query import BallQuery
+from src.diffusion_modules.modules.shared_mlp import SharedMLP
 
 __all__ = ["PointNetAModule", "PointNetSAModule", "PointNetFPModule"]
 

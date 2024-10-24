@@ -9,7 +9,7 @@ import time
 import pywt
 
 ### modify from https://github.com/fbcotter/pytorch_wavelets/blob/master/pytorch_wavelets/dwt/lowlevel.py
-from build3d.models.latent_model.diffusion_modules.dwt_utils import prep_filt_sfb3d, prep_filt_afb3d
+from src.latent_model.diffusion_modules.dwt_utils import prep_filt_sfb3d, prep_filt_afb3d
 
 
 class DWTInverse3d_Laplacian(nn.Module):

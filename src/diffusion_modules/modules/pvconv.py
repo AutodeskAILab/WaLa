@@ -1,9 +1,9 @@
 import torch.nn as nn
 import torch
-import src.networks.diffusion_modules.modules.functional as F
-from src.networks.diffusion_modules.modules.voxelization import Voxelization
-from src.networks.diffusion_modules.modules.shared_mlp import SharedMLP
-from src.networks.diffusion_modules.modules.se import SE3d
+import src.diffusion_modules.modules.functional as F
+from src.diffusion_modules.modules.voxelization import Voxelization
+from src.diffusion_modules.modules.shared_mlp import SharedMLP
+from src.diffusion_modules.modules.se import SE3d
 
 __all__ = ["PVConv", "Attention", "Swish", "PVConvReLU"]
 

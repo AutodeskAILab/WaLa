@@ -6,29 +6,29 @@ import torch as th
 from torch import nn
 
 from src.experiments.utils.wavelet_utils import WaveletData
-from src.networks.diffusion_modules.dwt import DWTInverse3d
-from src.networks.diffusion_modules.fp16_util import (
+from src.diffusion_modules.dwt import DWTInverse3d
+from src.diffusion_modules.fp16_util import (
     convert_module_to_f16,
     convert_module_to_f32,
 )
-from src.networks.diffusion_modules.gaussian_diffusion import (
+from src.diffusion_modules.gaussian_diffusion import (
     GaussianDiffusion,
     SpacedDiffusion,
     get_named_beta_schedule,
     space_timesteps,
 )
-from src.networks.diffusion_modules.nn import (
+from src.diffusion_modules.nn import (
     SiLU,
     conv_nd,
     linear,
     normalization,
     timestep_embedding,
 )
-from src.networks.diffusion_modules.resample import (
+from src.diffusion_modules.resample import (
     UniformSampler,
     LossSecondMomentResampler,
 )
-from src.networks.diffusion_modules.sparse_network import SparseComposer
+from src.diffusion_modules.sparse_network import SparseComposer
 from src.networks.diffusion_network import (
     TimestepEmbedSequential,
     ResBlock,

@@ -17,7 +17,7 @@ from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
 
 from typing import Final
 import torch.nn.functional as F
-from build3d.models.latent_model.latent_dit_utils import DiT, Global_Proj_Layer, TimestepEmbedder, DiTBlock, Cross_DiTBlock, get_3d_sincos_pos_embed
+from src.latent_model.latent_dit_utils import DiT, Global_Proj_Layer, TimestepEmbedder, DiTBlock, Cross_DiTBlock, get_3d_sincos_pos_embed
 
 from inspect import isfunction
 from einops._torch_specific import allow_ops_in_compiled_graph  # requires einops>=0.6.1

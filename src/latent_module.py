@@ -25,28 +25,28 @@ from pytorch_lightning.strategies import DDPStrategy
 from pytorch_lightning.loggers import TensorBoardLogger
 
 ### Network and Model Imports
-from build3d.models.latent_model import continous_diffusion_interface
-from build3d.models.diffusion_modules.dwt import DWTInverse3d
-from build3d.models.diffusion_modules.sparse_network import SparseComposer
-from build3d.experiments.utils.wavelet_utils import WaveletData
-from build3d.experiments.utils.wavelet_utils import (
+from src.latent_model import continous_diffusion_interface
+from src.diffusion_modules.dwt import DWTInverse3d
+from src.diffusion_modules.sparse_network import SparseComposer
+from src.experiments.utils.wavelet_utils import WaveletData
+from src.experiments.utils.wavelet_utils import (
     extract_wavelet_coefficients,
     extract_full_indices,
     extract_highs_from_values,
     pad_with_batch_idx,
 )
-from build3d.models.latent_model.points_network import (
+from src.latent_model.points_network import (
     PointNet_Large,
     PointNet_Simple,
 )
-from build3d.models.networks.voxels_network import (
+from src.networks.voxels_network import (
     Encoder_Down_Interpolate,
     Encoder_Down_2,
 )
 
 ### External Libraries (e.g., CLIP and Ray)
-from build3d.models.clip_mod import get_clip_model, tokenize
-from build3d.models.latent_model import wavelet_vq_model
+from src.clip_mod import get_clip_model, tokenize
+from src.latent_model import wavelet_vq_model
 
 
 def load_ema_state_dict(checkpoint_path, args):

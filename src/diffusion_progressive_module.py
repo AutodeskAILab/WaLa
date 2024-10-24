@@ -21,8 +21,8 @@ from src.experiments.utils.wavelet_utils import (
 from src.networks import diffusion_network, conditional_net
 from src.networks.points_network import PointNet_Head
 from src.networks.voxels_network import Encoder_Down_4
-from src.networks.diffusion_modules.network_ae import WaveletEncoder
-from src.networks.diffusion_modules.point_voxels import PointVoxelEncoder
+from src.diffusion_modules.network_ae import WaveletEncoder
+from src.diffusion_modules.point_voxels import PointVoxelEncoder
 
 from src.utils import visualization
 
