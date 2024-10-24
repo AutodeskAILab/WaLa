@@ -224,3 +224,14 @@ def get_image_transform(args, train_step=False):
     transform = Compose(transform)
 
     return transform
+
+
+def get_image_transform_latent_model():
+    transform = Compose([
+                        Resize(224),
+                        CenterCrop(224),
+                        ToTensor(),
+                        Normalize(mean=[0.5], std=[0.5]),
+                ])
+
+    return transform
