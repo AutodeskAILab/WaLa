@@ -49,7 +49,7 @@ def load_latent_model(
         args=args
     )
 
-    if model.ema_state_dict is not None:
+    if hasattr(model, "ema_state_dict") and model.ema_state_dict is not None:
         # load EMA weights
         ema = EMACallback(decay=0.9999)
         ema.reload_weight = model.ema_state_dict
