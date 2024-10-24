@@ -30,6 +30,7 @@ For example, on AWS EC2 instances with PyTorch Deep learning AMI, you can setup 
 conda create -n wala python==3.10
 conda activate wala
 pip install -r requirements.txt
+```
 
 ### Inference
 
@@ -41,3 +42,4 @@ The input data for this method is a single-view image of a 3D object.
 
 ```sh
 python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/table.png --output_dir examples --output_format obj
+```
