@@ -440,8 +440,9 @@ class Trainer_Condition_Network(pl.LightningModule):
     def inference_sample(
         self, data, data_idx, return_wavelet_volume=False, progress=True
     ):
-        ## TODO inference this high and low
         # Generate prediction and save visualization
+        
+        low_data = data["low"].type(torch.FloatTensor).to(self.device)
 
         if self.args.use_image_conditions:
             condition_features = self.extract_input_features(
@@ -456,6 +457,22 @@ class Trainer_Condition_Network(pl.LightningModule):
                 image_index=img_idx,
             )
         elif (
+            hasattr(self.args, "use_pointcloud_conditions")
+            and self.args.use_pointcloud_conditions
+        ):
+            condition_features = self.extract_input_features(
+                data, data_type="points", is_train=False, to_cuda=True
+            )
+            latent = self.network.inference(
+                low_data[data_idx : data_idx + 1],
+                condition_features[data_idx : data_idx + 1],
+                None,
+                local_rank=0,
+                current_stage=self.current_stage,
+                return_wavelet_volume=return_wavelet_volume,
+                progress=progress,
+            )
+        elif (
             hasattr(self.args, "use_voxel_conditions")
             and self.args.use_voxel_conditions
         ):
@@ -465,6 +482,16 @@ class Trainer_Condition_Network(pl.LightningModule):
             latent = self.network.inference(
                 low_data[data_idx : data_idx + 1],
                 condition_features[data_idx : data_idx + 1],
+                None,
+                local_rank=0,
+                current_stage=self.current_stage,
+                return_wavelet_volume=return_wavelet_volume,
+                progress=progress,
+            )
+        else:
+            latent = self.network.inference(
+                low_data[data_idx : data_idx + 1],
+                None,
                 None,
                 local_rank=0,
                 current_stage=self.current_stage,
