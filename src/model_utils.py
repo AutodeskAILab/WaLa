@@ -11,7 +11,7 @@ import urllib.error
 from huggingface_hub import hf_hub_download
 
 
-class DotDict(dict):    
+class DotDict(dict):
     def __getattr__(self, attr_):
         try:
             return self[attr_]
@@ -31,22 +31,22 @@ class DotDict(dict):
         return DotDict(copy.deepcopy(dict(self), memo))
 
 
-@backoff.on_exception(backoff.expo, (AttributeError, urllib.error.URLError), max_time=120)
+@backoff.on_exception(
+    backoff.expo, (AttributeError, urllib.error.URLError), max_time=120
+)
 def load_latent_model(
-    json_path, 
+    json_path,
     checkpoint_path,
     compile_model,
     device=None,
     eval=True,
-):      
+):
     with open(json_path, "r") as file:
         args = json.load(file, object_hook=DotDict)
 
-    #print(args)
+    # print(args)
     model = Trainer_Condition_Network.load_from_checkpoint(
-        checkpoint_path=checkpoint_path,
-        map_location="cpu",
-        args=args
+        checkpoint_path=checkpoint_path, map_location="cpu", args=args
     )
 
     if hasattr(model, "ema_state_dict") and model.ema_state_dict is not None:
@@ -90,7 +90,7 @@ class Model:
         device = (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
-        
+
         model = load_latent_model(
             json_path,
             checkpoint_path,

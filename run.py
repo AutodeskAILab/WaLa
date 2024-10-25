@@ -133,7 +133,7 @@ if __name__ == "__main__":
     print(f"Loading model")
     model = Model.from_pretrained(pretrained_model_name_or_path=args.model_name)
     image_transform = get_image_transform_latent_model()
-    
+
     if args.images:
         for image_path in args.images:
             print(f"Processing image: {image_path}")
@@ -170,7 +170,7 @@ if __name__ == "__main__":
             image_files=args.multi_view_images,
             views=image_views,
             image_transform=image_transform,
-            device=model.device
+            device=model.device,
         )
         data_idx = 0
         save_dir = Path(args.output_dir) / Path(args.multi_view_images[0]).stem

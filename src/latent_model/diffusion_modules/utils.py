@@ -7,7 +7,9 @@ from torch import nn, einsum
 from einops import rearrange, repeat
 from inspect import isfunction
 from einops._torch_specific import allow_ops_in_compiled_graph  # requires einops>=0.6.1
+
 allow_ops_in_compiled_graph()
+
 
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
@@ -166,7 +168,8 @@ class CheckpointFunction(th.autograd.Function):
         del ctx.input_params
         del output_tensors
         return (None, None) + input_grads
-    
+
+
 class TimestepBlock(nn.Module):
     """
     Any module where forward() takes timestep embeddings as a second argument.
@@ -177,6 +180,8 @@ class TimestepBlock(nn.Module):
         """
         Apply the module to `x` given `emb` timestep embeddings.
         """
+
+
 class TimeConstepBlock(nn.Module):
     """
     Any module where forward() takes timestep embeddings as a second argument.
@@ -187,6 +192,7 @@ class TimeConstepBlock(nn.Module):
         """
         Apply the module to `x` given `emb` timestep embeddings.
         """
+
 
 class TimeConstepEmbedSequential(nn.Sequential, TimeConstepBlock):
     """
@@ -202,6 +208,7 @@ class TimeConstepEmbedSequential(nn.Sequential, TimeConstepBlock):
                 x = layer(x)
         return x
 
+
 class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
     """
     A sequential module that passes timestep embeddings to the children that
@@ -215,11 +222,12 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
             elif isinstance(layer, SpatialTransformer):
                 x = layer(x, context)
             elif isinstance(layer, Transformer_Block):
-                x = layer(x, emb, context=context)    
+                x = layer(x, emb, context=context)
             else:
                 x = layer(x)
         return x
-    
+
+
 # class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
 #     """
 #     A sequential module that passes timestep embeddings to the children that
@@ -308,7 +316,7 @@ class ResBlock(TimestepBlock):
         use_scale_shift_norm=False,
         dims=2,
         use_checkpoint=False,
-        activation = SiLU()
+        activation=SiLU(),
     ):
         super().__init__()
         self.channels = channels
@@ -376,6 +384,7 @@ class ResBlock(TimestepBlock):
             h = self.out_layers(h)
         return self.skip_connection(x) + h
 
+
 class Con_ResBlock(TimeConstepBlock):
     """
     A residual block that can optionally change the number of channels.
@@ -400,8 +409,8 @@ class Con_ResBlock(TimeConstepBlock):
         use_scale_shift_norm=False,
         dims=2,
         use_checkpoint=False,
-        ae_latent_dim = 256,
-        activation = SiLU()
+        ae_latent_dim=256,
+        activation=SiLU(),
     ):
         super().__init__()
         self.channels = channels
@@ -450,7 +459,10 @@ class Con_ResBlock(TimeConstepBlock):
         :return: an [N x C x ...] Tensor of outputs.
         """
         return checkpoint(
-            self._forward, (x, emb, latent_codes), self.parameters(), self.use_checkpoint
+            self._forward,
+            (x, emb, latent_codes),
+            self.parameters(),
+            self.use_checkpoint,
         )
 
     def _forward(self, x, emb, z_sem):
@@ -461,16 +473,19 @@ class Con_ResBlock(TimeConstepBlock):
         if self.use_scale_shift_norm:
             out_norm, out_rest = self.out_layers[0], self.out_layers[1:]
             scale, shift = th.chunk(emb_out, 2, dim=1)
-            z_sem = torch.nn.functional.adaptive_avg_pool3d(z_sem, (1, 1, 1))[:, :, 0, 0, 0]
+            z_sem = torch.nn.functional.adaptive_avg_pool3d(z_sem, (1, 1, 1))[
+                :, :, 0, 0, 0
+            ]
             z_s = self.linear_sem(z_sem)
             while len(z_s.shape) < len(scale.shape):
                 z_s = z_s[..., None]
-            h = (out_norm(h) * (1 + scale) + shift)* z_s
+            h = (out_norm(h) * (1 + scale) + shift) * z_s
             h = out_rest(h)
         else:
             h = h + emb_out
             h = self.out_layers(h)
         return self.skip_connection(x) + h
+
 
 class AttentionBlock(nn.Module):
     """
@@ -541,17 +556,17 @@ class QKVAttention(nn.Module):
         # We perform two matmuls with the same number of ops.
         # The first computes the weight matrix, the second computes
         # the combination of the value vectors.
-        matmul_ops = 2 * b * (num_spatial ** 2) * c
+        matmul_ops = 2 * b * (num_spatial**2) * c
         model.total_ops += th.DoubleTensor([matmul_ops])
 
-        
-################################################### Attention Stuff ############################################################         
+
+################################################### Attention Stuff ############################################################
 def exists(val):
     return val is not None
 
 
 def uniq(arr):
-    return{el: True for el in arr}.keys()
+    return {el: True for el in arr}.keys()
 
 
 def default(val, d):
@@ -583,19 +598,18 @@ class GEGLU(nn.Module):
 
 
 class FeedForward(nn.Module):
-    def __init__(self, dim, dim_out=None, mult=4, glu=False, dropout=0.):
+    def __init__(self, dim, dim_out=None, mult=4, glu=False, dropout=0.0):
         super().__init__()
         inner_dim = int(dim * mult)
         dim_out = default(dim_out, dim)
-        project_in = nn.Sequential(
-            nn.Linear(dim, inner_dim),
-            nn.GELU()
-        ) if not glu else GEGLU(dim, inner_dim)
+        project_in = (
+            nn.Sequential(nn.Linear(dim, inner_dim), nn.GELU())
+            if not glu
+            else GEGLU(dim, inner_dim)
+        )
 
         self.net = nn.Sequential(
-            project_in,
-            nn.Dropout(dropout),
-            nn.Linear(inner_dim, dim_out)
+            project_in, nn.Dropout(dropout), nn.Linear(inner_dim, dim_out)
         )
 
     def forward(self, x):
@@ -617,26 +631,18 @@ class SpatialSelfAttention(nn.Module):
         self.in_channels = in_channels
 
         self.norm = Normalize(in_channels)
-        self.q = torch.nn.Conv2d(in_channels,
-                                 in_channels,
-                                 kernel_size=1,
-                                 stride=1,
-                                 padding=0)
-        self.k = torch.nn.Conv2d(in_channels,
-                                 in_channels,
-                                 kernel_size=1,
-                                 stride=1,
-                                 padding=0)
-        self.v = torch.nn.Conv2d(in_channels,
-                                 in_channels,
-                                 kernel_size=1,
-                                 stride=1,
-                                 padding=0)
-        self.proj_out = torch.nn.Conv2d(in_channels,
-                                        in_channels,
-                                        kernel_size=1,
-                                        stride=1,
-                                        padding=0)
+        self.q = torch.nn.Conv2d(
+            in_channels, in_channels, kernel_size=1, stride=1, padding=0
+        )
+        self.k = torch.nn.Conv2d(
+            in_channels, in_channels, kernel_size=1, stride=1, padding=0
+        )
+        self.v = torch.nn.Conv2d(
+            in_channels, in_channels, kernel_size=1, stride=1, padding=0
+        )
+        self.proj_out = torch.nn.Conv2d(
+            in_channels, in_channels, kernel_size=1, stride=1, padding=0
+        )
 
     def forward(self, x):
         h_ = x
@@ -646,31 +652,31 @@ class SpatialSelfAttention(nn.Module):
         v = self.v(h_)
 
         # compute attention
-        b,c,h,w = q.shape
-        q = rearrange(q, 'b c h w l -> b (h w l) c')
-        k = rearrange(k, 'b c h w l-> b c (h w l)')
-        w_ = torch.einsum('bij,bjk->bik', q, k)
+        b, c, h, w = q.shape
+        q = rearrange(q, "b c h w l -> b (h w l) c")
+        k = rearrange(k, "b c h w l-> b c (h w l)")
+        w_ = torch.einsum("bij,bjk->bik", q, k)
 
-        w_ = w_ * (int(c)**(-0.5))
+        w_ = w_ * (int(c) ** (-0.5))
         w_ = torch.nn.functional.softmax(w_, dim=2)
 
         # attend to values
-        v = rearrange(v, 'b c h w l -> b c (h w, l)')
-        w_ = rearrange(w_, 'b i j -> b j i')
-        h_ = torch.einsum('bij,bjk->bik', v, w_)
-        h_ = rearrange(h_, 'b c (h w l) -> b c h w l', h=h)
+        v = rearrange(v, "b c h w l -> b c (h w, l)")
+        w_ = rearrange(w_, "b i j -> b j i")
+        h_ = torch.einsum("bij,bjk->bik", v, w_)
+        h_ = rearrange(h_, "b c (h w l) -> b c h w l", h=h)
         h_ = self.proj_out(h_)
 
-        return x+h_
-    
-    
+        return x + h_
+
+
 class CrossAttention(nn.Module):
-    def __init__(self, query_dim, context_dim=None, heads=8, dim_head=64, dropout=0.):
+    def __init__(self, query_dim, context_dim=None, heads=8, dim_head=64, dropout=0.0):
         super().__init__()
         inner_dim = dim_head * heads
         context_dim = default(context_dim, query_dim)
 
-        self.scale = dim_head ** -0.5
+        self.scale = dim_head**-0.5
         self.heads = heads
 
         self.to_q = nn.Linear(query_dim, inner_dim, bias=False)
@@ -678,8 +684,7 @@ class CrossAttention(nn.Module):
         self.to_v = nn.Linear(context_dim, inner_dim, bias=False)
 
         self.to_out = nn.Sequential(
-            nn.Linear(inner_dim, query_dim),
-            nn.Dropout(dropout)
+            nn.Linear(inner_dim, query_dim), nn.Dropout(dropout)
         )
 
     def forward(self, x, context=None, mask=None):
@@ -691,41 +696,59 @@ class CrossAttention(nn.Module):
         k = self.to_k(context)
         v = self.to_v(context)
 
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> (b h) n d', h=h), (q, k, v))
+        q, k, v = map(lambda t: rearrange(t, "b n (h d) -> (b h) n d", h=h), (q, k, v))
 
-        sim = einsum('b i d, b j d -> b i j', q, k) * self.scale
+        sim = einsum("b i d, b j d -> b i j", q, k) * self.scale
 
         if exists(mask):
-            mask = rearrange(mask, 'b ... -> b (...)')
+            mask = rearrange(mask, "b ... -> b (...)")
             max_neg_value = -torch.finfo(sim.dtype).max
-            mask = repeat(mask, 'b j -> (b h) () j', h=h)
+            mask = repeat(mask, "b j -> (b h) () j", h=h)
             sim.masked_fill_(~mask, max_neg_value)
 
         # attention, what we cannot get enough of
         attn = sim.softmax(dim=-1)
 
-        out = einsum('b i j, b j d -> b i d', attn, v)
-        out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
+        out = einsum("b i j, b j d -> b i d", attn, v)
+        out = rearrange(out, "(b h) n d -> b n (h d)", h=h)
         return self.to_out(out)
-    
-    
+
+
 class BasicTransformerBlock(nn.Module):
-    def __init__(self, dim, n_heads, d_head, dropout=0., context_dim=None, gated_ff=True, checkpoint=False):
+    def __init__(
+        self,
+        dim,
+        n_heads,
+        d_head,
+        dropout=0.0,
+        context_dim=None,
+        gated_ff=True,
+        checkpoint=False,
+    ):
         super().__init__()
-        self.attn1 = CrossAttention(query_dim=dim, heads=n_heads, dim_head=d_head, dropout=dropout)  # is a self-attention
+        self.attn1 = CrossAttention(
+            query_dim=dim, heads=n_heads, dim_head=d_head, dropout=dropout
+        )  # is a self-attention
         self.ff = FeedForward(dim, dropout=dropout, glu=gated_ff)
-        self.attn2 = CrossAttention(query_dim=dim, context_dim=context_dim,
-                                    heads=n_heads, dim_head=d_head, dropout=dropout)  # is self-attn if context is none
+        self.attn2 = CrossAttention(
+            query_dim=dim,
+            context_dim=context_dim,
+            heads=n_heads,
+            dim_head=d_head,
+            dropout=dropout,
+        )  # is self-attn if context is none
         self.norm1 = nn.LayerNorm(dim)
         self.norm2 = nn.LayerNorm(dim)
         self.norm3 = nn.LayerNorm(dim)
         self.checkpoint = checkpoint
 
     def forward(self, x, context=None):
-        return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
+        return checkpoint(
+            self._forward, (x, context), self.parameters(), self.checkpoint
+        )
 
     def _forward(self, x, context=None):
-        #print(x.type(), context.type(), self.norm1)   
+        # print(x.type(), context.type(), self.norm1)
         x = self.attn1(self.norm1(x.float())) + x
         x = self.attn2(self.norm2(x.float()), context=context.float()) + x.float()
         x = self.ff(self.norm3(x)) + x
@@ -740,40 +763,42 @@ class SpatialTransformer(nn.Module):
     Then apply standard transformer action.
     Finally, reshape to image
     """
-    def __init__(self, in_channels, n_heads, d_head,
-                 depth=1, dropout=0., context_dim=None):
+
+    def __init__(
+        self, in_channels, n_heads, d_head, depth=1, dropout=0.0, context_dim=None
+    ):
         super().__init__()
         self.in_channels = in_channels
         inner_dim = n_heads * d_head
         self.norm = normalization(in_channels)
 
-        self.proj_in = nn.Conv3d(in_channels,
-                                 inner_dim,
-                                 kernel_size=1,
-                                 stride=1,
-                                 padding=0)
-
-        self.transformer_blocks = nn.ModuleList(
-            [BasicTransformerBlock(inner_dim, n_heads, d_head, dropout=dropout, context_dim=context_dim)
-                for d in range(depth)]
+        self.proj_in = nn.Conv3d(
+            in_channels, inner_dim, kernel_size=1, stride=1, padding=0
         )
 
-        self.proj_out = zero_module(nn.Conv3d(inner_dim,
-                                              in_channels,
-                                              kernel_size=1,
-                                              stride=1,
-                                              padding=0))
+        self.transformer_blocks = nn.ModuleList(
+            [
+                BasicTransformerBlock(
+                    inner_dim, n_heads, d_head, dropout=dropout, context_dim=context_dim
+                )
+                for d in range(depth)
+            ]
+        )
+
+        self.proj_out = zero_module(
+            nn.Conv3d(inner_dim, in_channels, kernel_size=1, stride=1, padding=0)
+        )
 
     def forward(self, x, context=None):
         # note: if no context is given, cross-attention defaults to self-attention
-        #print(x.shape, context.shape)
+        # print(x.shape, context.shape)
         b, c, h, w, l = x.shape
         x_in = x
         x = self.norm(x)
         x = self.proj_in(x)
-        x = rearrange(x, 'b c h w l -> b (h w l) c')
+        x = rearrange(x, "b c h w l -> b (h w l) c")
         for block in self.transformer_blocks:
             x = block(x, context=context)
-        x = rearrange(x, 'b (h w l) c -> b c h w l', h=h, w=w)
+        x = rearrange(x, "b (h w l) c -> b c h w l", h=h, w=w)
         x = self.proj_out(x)
-        return x + x_in    
+        return x + x_in

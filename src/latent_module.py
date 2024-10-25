@@ -441,7 +441,7 @@ class Trainer_Condition_Network(pl.LightningModule):
         self, data, data_idx, return_wavelet_volume=False, progress=True
     ):
         # Generate prediction and save visualization
-        
+
         low_data = data["low"].type(torch.FloatTensor).to(self.device)
 
         if self.args.use_image_conditions:
@@ -498,7 +498,7 @@ class Trainer_Condition_Network(pl.LightningModule):
                 return_wavelet_volume=return_wavelet_volume,
                 progress=progress,
             )
-        
+
         pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
         wavelet_data_pred = WaveletData(
             shape_list=self.dwt_sparse_composer.shape_list,

@@ -314,7 +314,9 @@ def load(
     """
     if name in _MODELS:
         model_path = _download(
-            _MODELS[name], download_root or os.path.expanduser("~/.cache/clip"), locking=True
+            _MODELS[name],
+            download_root or os.path.expanduser("~/.cache/clip"),
+            locking=True,
         )
     elif os.path.isfile(name):
         model_path = name
@@ -1252,18 +1254,20 @@ def get_clip_model(args):
         input_resolution = 224
         vocab_size = "N/A"
     elif args.clip_model_type == "dino-l-14_reg":
-        clip_model = DINO(model_name='dinov2_vitl14_reg')
-        clip_preprocess = T.Compose([
-            T.Resize(224),
-            T.CenterCrop(224),
-            T.ToTensor(),
-            T.Normalize(mean=[0.5], std=[0.5]),
-            ])
-        cond_emb_dim = 1024   
-        grid_size = 256 
-        grid_emb_size = 1024 
+        clip_model = DINO(model_name="dinov2_vitl14_reg")
+        clip_preprocess = T.Compose(
+            [
+                T.Resize(224),
+                T.CenterCrop(224),
+                T.ToTensor(),
+                T.Normalize(mean=[0.5], std=[0.5]),
+            ]
+        )
+        cond_emb_dim = 1024
+        grid_size = 256
+        grid_emb_size = 1024
         input_resolution = 224
-        vocab_size = "N/A"      
+        vocab_size = "N/A"
     else:
         clip_model, clip_preprocess = load("ViT-B/32")
         cond_emb_dim = 512

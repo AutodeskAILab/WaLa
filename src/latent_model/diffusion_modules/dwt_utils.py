@@ -1,6 +1,7 @@
 from pytorch_wavelets.dwt import lowlevel as lowlevel
 import torch
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
 def prep_filt_sfb3d(g0_dep, g1_dep, g0_col, g1_col, g0_row, g1_row):

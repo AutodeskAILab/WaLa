@@ -8,9 +8,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch as th
 
-if hasattr(torch, '_dynamo'):
+if hasattr(torch, "_dynamo"):
     torch._dynamo.config.suppress_errors = True
     torch._dynamo.config.cache_size_limit = 1024
+
 
 class SiLU(nn.Module):
     def forward(self, x):
@@ -193,9 +194,17 @@ class ResBlock_V(nn.Module):
         h = self.out_layers(h)
         return self.skip_connection(x) + h
 
+
 # Encoder_Down_Interpolate class
 class Encoder_Down_Interpolate(nn.Module):
-    def __init__(self, channel_in, channel_out, dropout=0.0, activation=SiLU(), interpolate_size=(6, 6, 6)):
+    def __init__(
+        self,
+        channel_in,
+        channel_out,
+        dropout=0.0,
+        activation=SiLU(),
+        interpolate_size=(6, 6, 6),
+    ):
         super().__init__()
         self.actvn = activation
         self.interpolate_size = interpolate_size
@@ -207,29 +216,32 @@ class Encoder_Down_Interpolate(nn.Module):
         self.res_4 = ResBlock_V(256, dropout, out_channels=256, dims=3)
 
         self.out_conv = nn.Sequential(
-            normalization(256),
-            activation,
-            conv_nd(3, 256, channel_out, 3, padding=1)
+            normalization(256), activation, conv_nd(3, 256, channel_out, 3, padding=1)
         )
 
     def forward(self, x):
         batch_size = x.size(0)
-        if hasattr(torch, '_dynamo'):
+        if hasattr(torch, "_dynamo"):
             torch._dynamo.config.suppress_errors = True
             torch._dynamo.config.cache_size_limit = 1024
         x = self.in_conv(x)
         x = self.res_1(x)
         x = self.res_2(x)
-        x = F.interpolate(x, size=self.interpolate_size, mode='trilinear', align_corners=False)
+        x = F.interpolate(
+            x, size=self.interpolate_size, mode="trilinear", align_corners=False
+        )
         x = self.res_3(x)
         x = self.res_4(x)
         x = self.out_conv(x)
 
         return x
-    
+
+
 # Encoder_Down_Interpolate class
 class Encoder_Down_2(nn.Module):
-    def __init__(self, channel_in, channel_out, dropout=0.0, hidden_dim=128, activation=SiLU()):
+    def __init__(
+        self, channel_in, channel_out, dropout=0.0, hidden_dim=128, activation=SiLU()
+    ):
         super().__init__()
         self.actvn = activation
 
@@ -244,12 +256,12 @@ class Encoder_Down_2(nn.Module):
         self.out_conv = nn.Sequential(
             normalization(hidden_dim),
             activation,
-            conv_nd(3, hidden_dim, channel_out, 3, padding=1)
+            conv_nd(3, hidden_dim, channel_out, 3, padding=1),
         )
 
     def forward(self, x):
         batch_size = x.size(0)
-        if hasattr(torch, '_dynamo'):
+        if hasattr(torch, "_dynamo"):
             torch._dynamo.config.suppress_errors = True
             torch._dynamo.config.cache_size_limit = 1024
         x = self.in_conv(x)
@@ -262,6 +274,7 @@ class Encoder_Down_2(nn.Module):
         x = self.res_6(x)
         x = self.out_conv(x)
         return x
+
 
 class Encoder_Down_4(nn.Module):
     def __init__(self, channel_in, channel_out, dropout=0.0, activation=SiLU()):

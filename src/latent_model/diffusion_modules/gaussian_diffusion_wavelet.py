@@ -4,6 +4,7 @@ import math
 import numpy as np
 import torch
 
+
 def normal_kl(mean1, logvar1, mean2, logvar2):
     """
     Compute the KL divergence between two gaussians.
@@ -25,11 +26,11 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
     ]
 
     return 0.5 * (
-            -1.0
-            + logvar2
-            - logvar1
-            + torch.exp(logvar1 - logvar2)
-            + ((mean1 - mean2) ** 2) * torch.exp(-logvar2)
+        -1.0
+        + logvar2
+        - logvar1
+        + torch.exp(logvar1 - logvar2)
+        + ((mean1 - mean2) ** 2) * torch.exp(-logvar2)
     )
 
 
@@ -38,7 +39,10 @@ def approx_standard_normal_cdf(x):
     A fast approximation of the cumulative distribution function of the
     standard normal.
     """
-    return 0.5 * (1.0 + torch.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * torch.pow(x, 3))))
+    return 0.5 * (
+        1.0 + torch.tanh(np.sqrt(2.0 / np.pi) * (x + 0.044715 * torch.pow(x, 3)))
+    )
+
 
 def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     """
@@ -63,10 +67,13 @@ def discretized_gaussian_log_likelihood(x, *, means, log_scales):
     log_probs = torch.where(
         x < -0.999,
         log_cdf_plus,
-        torch.where(x > 0.999, log_one_minus_cdf_min, torch.log(cdf_delta.clamp(min=1e-12))),
+        torch.where(
+            x > 0.999, log_one_minus_cdf_min, torch.log(cdf_delta.clamp(min=1e-12))
+        ),
     )
     assert log_probs.shape == x.shape
     return log_probs
+
 
 def mean_flat(tensor):
     """
@@ -75,7 +82,7 @@ def mean_flat(tensor):
     return tensor.mean(dim=list(range(1, len(tensor.shape))))
 
 
-def get_named_beta_schedule(schedule_name, num_diffusion_timesteps, scale_ratio = 1.0):
+def get_named_beta_schedule(schedule_name, num_diffusion_timesteps, scale_ratio=1.0):
     """
     Get a pre-defined beta schedule for the given name.
     The beta schedule library consists of beta schedules which remain similar
@@ -155,9 +162,6 @@ class LossType(enum.Enum):
         return self == LossType.KL or self == LossType.RESCALED_KL
 
 
-
-
-
 class GaussianDiffusion:
     """
     Utilities for training and sampling diffusion models.
@@ -186,8 +190,12 @@ class GaussianDiffusion:
         self.model_var_type = model_var_type
         self.loss_type = loss_type
 
-        self.model_mean_type = ModelMeanType.__getattribute__(ModelMeanType, self.model_mean_type)
-        self.model_var_type = ModelVarType.__getattribute__(ModelVarType, self.model_var_type)
+        self.model_mean_type = ModelMeanType.__getattribute__(
+            ModelMeanType, self.model_mean_type
+        )
+        self.model_var_type = ModelVarType.__getattribute__(
+            ModelVarType, self.model_var_type
+        )
         self.loss_type = LossType.__getattribute__(LossType, self.loss_type)
 
         self.rescale_timesteps = rescale_timesteps
@@ -288,7 +296,16 @@ class GaussianDiffusion:
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
     def p_mean_variance(
-        self, model, x, t, clip_denoised=True, denoised_fn=None, model_kwargs=None, latent_rep = None, latent_rep0 = None, use_part=False
+        self,
+        model,
+        x,
+        t,
+        clip_denoised=True,
+        denoised_fn=None,
+        model_kwargs=None,
+        latent_rep=None,
+        latent_rep0=None,
+        use_part=False,
     ):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of
@@ -316,27 +333,55 @@ class GaussianDiffusion:
         assert t.shape == (B,)
         if latent_rep is not None:
             if use_part:
-                x_concat0 = torch.cat((latent_rep0.squeeze()[None, :, None, None, None].repeat(1, 1, x.shape[-3], 23, x.shape[-1]), x[:,:,:, :23, :]), dim=1)
-                x_concat1 = torch.cat((latent_rep.squeeze()[None, :, None, None, None].repeat(1, 1, x.shape[-3], 23, x.shape[-1]), x[:,:,:, 23:, :]), dim=1)
+                x_concat0 = torch.cat(
+                    (
+                        latent_rep0.squeeze()[None, :, None, None, None].repeat(
+                            1, 1, x.shape[-3], 23, x.shape[-1]
+                        ),
+                        x[:, :, :, :23, :],
+                    ),
+                    dim=1,
+                )
+                x_concat1 = torch.cat(
+                    (
+                        latent_rep.squeeze()[None, :, None, None, None].repeat(
+                            1, 1, x.shape[-3], 23, x.shape[-1]
+                        ),
+                        x[:, :, :, 23:, :],
+                    ),
+                    dim=1,
+                )
                 x_concat = torch.cat((x_concat0, x_concat1), dim=3)
                 model_output = model(x_concat, self._scale_timesteps(t), **model_kwargs)
             else:
-                x_concat = torch.cat((latent_rep.squeeze()[None, :, None, None, None].repeat(1, 1, x.shape[-3], x.shape[-2], x.shape[-1]), x), dim=1)
+                x_concat = torch.cat(
+                    (
+                        latent_rep.squeeze()[None, :, None, None, None].repeat(
+                            1, 1, x.shape[-3], x.shape[-2], x.shape[-1]
+                        ),
+                        x,
+                    ),
+                    dim=1,
+                )
                 model_output = model(x_concat, self._scale_timesteps(t), **model_kwargs)
         else:
             if model_kwargs["dp_cond"] is None or model_kwargs["latent_codes"] is None:
                 condition = model_kwargs["latent_codes"]
-                model_output = model(x, self._scale_timesteps(t), latent_codes=condition)
-            else:    
+                model_output = model(
+                    x, self._scale_timesteps(t), latent_codes=condition
+                )
+            else:
                 condition = model_kwargs["latent_codes"]
                 x_in = torch.cat([x] * 2)
                 t_in = torch.cat([self._scale_timesteps(t)] * 2)
                 c_in = torch.cat([model_kwargs["condition_zero"], condition])
-                #print(x_in.shape, t_in.shape, c_in.shape)
+                # print(x_in.shape, t_in.shape, c_in.shape)
                 e_t_uncond, e_t = model(x_in, t_in, latent_codes=c_in).chunk(2)
-                #print(e_t_uncond.shape, e_t.shape)
-                model_output = e_t_uncond + model_kwargs["guidance_scale"] * (e_t - e_t_uncond)
-            #model_output = model(x, self._scale_timesteps(t), latent_codes=condition)
+                # print(e_t_uncond.shape, e_t.shape)
+                model_output = e_t_uncond + model_kwargs["guidance_scale"] * (
+                    e_t - e_t_uncond
+                )
+            # model_output = model(x, self._scale_timesteps(t), latent_codes=condition)
 
         if self.model_var_type in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE]:
             assert model_output.shape == (B, C * 2, *x.shape[2:])
@@ -461,7 +506,9 @@ class GaussianDiffusion:
         nonzero_mask = (
             (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
         )  # no noise when t == 0
-        sample = out["mean"] + nonzero_mask * torch.exp(0.5 * out["log_variance"]) * noise
+        sample = (
+            out["mean"] + nonzero_mask * torch.exp(0.5 * out["log_variance"]) * noise
+        )
         return {"sample": sample, "pred_xstart": out["pred_xstart"]}
 
     def p_sample_loop(
@@ -493,7 +540,7 @@ class GaussianDiffusion:
         """
         final = None
         i = 0
-        num_samples = [600, 700, 750 ,999]
+        num_samples = [600, 700, 750, 999]
         samples = []
         for sample in self.p_sample_loop_progressive(
             model,
@@ -567,9 +614,9 @@ class GaussianDiffusion:
         denoised_fn=None,
         model_kwargs=None,
         eta=0.0,
-        latent_rep = None,
-        latent_rep0 = None,
-        use_part = False
+        latent_rep=None,
+        latent_rep0=None,
+        use_part=False,
     ):
         """
         Sample x_{t-1} from the model using DDIM.
@@ -582,9 +629,9 @@ class GaussianDiffusion:
             clip_denoised=clip_denoised,
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
-            latent_rep = latent_rep,
-            latent_rep0 = latent_rep0,
-            use_part = use_part
+            latent_rep=latent_rep,
+            latent_rep0=latent_rep0,
+            use_part=use_part,
         )
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
@@ -592,15 +639,15 @@ class GaussianDiffusion:
         alpha_bar = _extract_into_tensor(self.alphas_cumprod, t, x.shape)
         alpha_bar_prev = _extract_into_tensor(self.alphas_cumprod_prev, t, x.shape)
         sigma = (
-                eta
-                * torch.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
-                * torch.sqrt(1 - alpha_bar / alpha_bar_prev)
+            eta
+            * torch.sqrt((1 - alpha_bar_prev) / (1 - alpha_bar))
+            * torch.sqrt(1 - alpha_bar / alpha_bar_prev)
         )
         # Equation 12.
         noise = torch.randn_like(x)
         mean_pred = (
-                out["pred_xstart"] * torch.sqrt(alpha_bar_prev)
-                + torch.sqrt(1 - alpha_bar_prev - sigma ** 2) * eps
+            out["pred_xstart"] * torch.sqrt(alpha_bar_prev)
+            + torch.sqrt(1 - alpha_bar_prev - sigma**2) * eps
         )
         nonzero_mask = (
             (t != 0).float().view(-1, *([1] * (len(x.shape) - 1)))
@@ -640,8 +687,8 @@ class GaussianDiffusion:
 
         # Equation 12. reversed
         mean_pred = (
-                out["pred_xstart"] * torch.sqrt(alpha_bar_next)
-                + torch.sqrt(1 - alpha_bar_next) * eps
+            out["pred_xstart"] * torch.sqrt(alpha_bar_next)
+            + torch.sqrt(1 - alpha_bar_next) * eps
         )
 
         return {"sample": mean_pred, "pred_xstart": out["pred_xstart"]}
@@ -657,9 +704,9 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
-        latent_rep = None,
-        latent_rep0 = None,
-        use_part = False
+        latent_rep=None,
+        latent_rep0=None,
+        use_part=False,
     ):
         """
         Generate samples from the model using DDIM.
@@ -676,9 +723,9 @@ class GaussianDiffusion:
             device=device,
             progress=progress,
             eta=eta,
-            latent_rep = latent_rep,
-            latent_rep0 = latent_rep0,
-            use_part = use_part
+            latent_rep=latent_rep,
+            latent_rep0=latent_rep0,
+            use_part=use_part,
         ):
             final = sample
         return final["sample"]
@@ -694,9 +741,9 @@ class GaussianDiffusion:
         device=None,
         progress=False,
         eta=0.0,
-        latent_rep = None,
-        latent_rep0 = None,
-        use_part=False
+        latent_rep=None,
+        latent_rep0=None,
+        use_part=False,
     ):
         """
         Use DDIM to sample from the model and yield intermediate samples from
@@ -729,9 +776,9 @@ class GaussianDiffusion:
                     denoised_fn=denoised_fn,
                     model_kwargs=model_kwargs,
                     eta=eta,
-                    latent_rep = latent_rep,
-                    latent_rep0 = latent_rep0,
-                    use_part = use_part
+                    latent_rep=latent_rep,
+                    latent_rep0=latent_rep0,
+                    use_part=use_part,
                 )
                 yield out
                 img = out["sample"]
@@ -767,10 +814,12 @@ class GaussianDiffusion:
         # At the first timestep return the decoder NLL,
         # otherwise return KL(q(x_{t-1}|x_t,x_0) || p(x_{t-1}|x_t))
         # This has chnaged to continuous version
-        output = kl #th.where((t == 0), decoder_nll, kl)
+        output = kl  # th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None, latent_codes = None):
+    def training_losses(
+        self, model, x_start, t, model_kwargs=None, noise=None, latent_codes=None
+    ):
         """
         Compute training losses for a single timestep.
         :param model: the model to evaluate loss on.
@@ -803,7 +852,9 @@ class GaussianDiffusion:
                 terms["loss"] *= self.num_timesteps
         elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
             if latent_codes is not None:
-                model_output = model(x_t, self._scale_timesteps(t), latent_codes = latent_codes)
+                model_output = model(
+                    x_t, self._scale_timesteps(t), latent_codes=latent_codes
+                )
             else:
                 model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
 
@@ -845,19 +896,25 @@ class GaussianDiffusion:
             stage_losses = []
 
             ### high loss
-            final_loss, stage_losses = self.compute_highs_losses(base_loss, batch_size, final_loss, model_kwargs,
-                                                                    model_output,
-                                                                    stage_losses, target)
+            final_loss, stage_losses = self.compute_highs_losses(
+                base_loss,
+                batch_size,
+                final_loss,
+                model_kwargs,
+                model_output,
+                stage_losses,
+                target,
+            )
 
-            if not model_kwargs['no_rebalance_loss']:
-                final_loss = final_loss / (model_kwargs['current_stage'] + 1)
+            if not model_kwargs["no_rebalance_loss"]:
+                final_loss = final_loss / (model_kwargs["current_stage"] + 1)
 
             terms["mse"] = final_loss
             terms["base_loss"] = base_loss
 
             ### logging the losses
-            for order_idx in range(model_kwargs['current_stage']):
-                terms[f'loss_{order_idx + 1}'] = stage_losses[order_idx]
+            for order_idx in range(model_kwargs["current_stage"]):
+                terms[f"loss_{order_idx + 1}"] = stage_losses[order_idx]
 
             if "vb" in terms:
                 terms["loss"] = terms["mse"] + terms["vb"]
@@ -868,7 +925,14 @@ class GaussianDiffusion:
 
         return terms
 
-    def surface_loss(self, target, model_output, high_indices,  high_indices_empty=None, high_values_mask=None):
+    def surface_loss(
+        self,
+        target,
+        model_output,
+        high_indices,
+        high_indices_empty=None,
+        high_values_mask=None,
+    ):
         batch_size = target.size(0)
         non_empty_indices = high_indices[:, :, 1:].long()
         training_indices = torch.cat((non_empty_indices, high_indices_empty), dim=1)
@@ -877,30 +941,48 @@ class GaussianDiffusion:
 
         masks = high_values_mask.repeat(1, 2).view(-1)
 
-        #print(masks.shape, indices.shape, d1.shape, pred.shape, indices[0])
-        #raise "err"
+        # print(masks.shape, indices.shape, d1.shape, pred.shape, indices[0])
+        # raise "err"
         target_idx = torch.permute(target, (0, 2, 3, 4, 1))
-        target_idx = target_idx[indices[:, 0], indices[:, 1], indices[:, 2], indices[:, 3],:]
+        target_idx = target_idx[
+            indices[:, 0], indices[:, 1], indices[:, 2], indices[:, 3], :
+        ]
         model_output_idx = torch.permute(model_output, (0, 2, 3, 4, 1))
-        model_output_idx = model_output_idx[indices[:, 0], indices[:, 1], indices[:, 2], indices[:, 3],:]
-
+        model_output_idx = model_output_idx[
+            indices[:, 0], indices[:, 1], indices[:, 2], indices[:, 3], :
+        ]
 
         # compute loss
         losses_order_idx = (target_idx - model_output_idx) ** 2
-        losses_order_idx = losses_order_idx.view(-1, losses_order_idx.size(-1))  ## get reshape
+        losses_order_idx = losses_order_idx.view(
+            -1, losses_order_idx.size(-1)
+        )  ## get reshape
 
-        #print(losses_order_idx.shape, model_output_idx.shape, target_idx.shape)
+        # print(losses_order_idx.shape, model_output_idx.shape, target_idx.shape)
 
         ## masking un related loss
         losses_order_idx_masked = losses_order_idx * masks.unsqueeze(1)
-        losses_order_idx_masked = losses_order_idx_masked.view(batch_size, -1, losses_order_idx_masked.size(-1))
+        losses_order_idx_masked = losses_order_idx_masked.view(
+            batch_size, -1, losses_order_idx_masked.size(-1)
+        )
 
         ## compute the loss
         loss = sum_flat(losses_order_idx_masked) / torch.sum(high_values_mask, dim=1)
-        return loss 
+        return loss
 
-    def reconstruction_loss(self, pred, data_samples, low, high_indices, high_values, current_stage, output_chan, high_values_mask=None, high_indices_empty=None):
-                
+    def reconstruction_loss(
+        self,
+        pred,
+        data_samples,
+        low,
+        high_indices,
+        high_values,
+        current_stage,
+        output_chan,
+        high_values_mask=None,
+        high_indices_empty=None,
+    ):
+
         base_loss = mean_flat((pred[:, 0] - data_samples[:, 0]) ** 2)
         final_loss = base_loss
         batch_size = pred.size(0)
@@ -909,88 +991,135 @@ class GaussianDiffusion:
         start_cnt = 0
         eps = 1e-10
         terms = {}
-        
+
         for order_idx in range(current_stage):
             order = (2 ** (order_idx + 1)) ** 3
             idx = order - 1
-            
-            #print(-idx, self.output_chan - start_cnt)
-            #print(data_samples[:, -idx:self.output_chan - start_cnt].shape, pred[:, -idx:self.output_chan - start_cnt].shape)
+
+            # print(-idx, self.output_chan - start_cnt)
+            # print(data_samples[:, -idx:self.output_chan - start_cnt].shape, pred[:, -idx:self.output_chan - start_cnt].shape)
             if self.use_sample_training == True:
-                loss_order_idx = self.surface_loss(data_samples[:, -idx:output_chan - start_cnt], pred[:, -idx:output_chan - start_cnt], high_indices,  high_indices_empty=high_indices_empty, high_values_mask=high_values_mask).mean()
+                loss_order_idx = self.surface_loss(
+                    data_samples[:, -idx : output_chan - start_cnt],
+                    pred[:, -idx : output_chan - start_cnt],
+                    high_indices,
+                    high_indices_empty=high_indices_empty,
+                    high_values_mask=high_values_mask,
+                ).mean()
             else:
-                loss_order_idx = mean_flat((pred[:, -idx:output_chan - start_cnt] - data_samples[:, -idx:output_chan - start_cnt]) ** 2)
-                
+                loss_order_idx = mean_flat(
+                    (
+                        pred[:, -idx : output_chan - start_cnt]
+                        - data_samples[:, -idx : output_chan - start_cnt]
+                    )
+                    ** 2
+                )
+
             if self.no_rebalance_loss:
                 final_loss = final_loss + loss_order_idx
             else:
-                final_loss = final_loss + (
-                        base_loss.detach() / (loss_order_idx.detach() + eps)) * loss_order_idx
+                final_loss = (
+                    final_loss
+                    + (base_loss.detach() / (loss_order_idx.detach() + eps))
+                    * loss_order_idx
+                )
 
             stage_losses.append(loss_order_idx)
             start_cnt = idx
-                       
+
         terms["mse"] = final_loss
         terms["base_loss"] = base_loss
 
         ### logging the losses
-        for order_idx in range(current_stage): #
-            terms[f'loss_{order_idx+1}'] = stage_losses[order_idx] 
-        
+        for order_idx in range(current_stage):  #
+            terms[f"loss_{order_idx+1}"] = stage_losses[order_idx]
+
         return terms
 
-    def compute_highs_losses(self, base_loss, batch_size, final_loss, model_kwargs, model_output, stage_losses, target):
+    def compute_highs_losses(
+        self,
+        base_loss,
+        batch_size,
+        final_loss,
+        model_kwargs,
+        model_output,
+        stage_losses,
+        target,
+    ):
 
-        if 'training_indices' in model_kwargs and 'high_values_mask' in model_kwargs:
-            indices = model_kwargs['training_indices'].view(-1, 4)
-            masks = model_kwargs['high_values_mask'].view(-1)
+        if "training_indices" in model_kwargs and "high_values_mask" in model_kwargs:
+            indices = model_kwargs["training_indices"].view(-1, 4)
+            masks = model_kwargs["high_values_mask"].view(-1)
         else:
             indices = None
             masks = None
 
         start_cnt = 0
         eps = 1e-10
-        for order_idx in range(model_kwargs['current_stage']):
+        for order_idx in range(model_kwargs["current_stage"]):
             order = (2 ** (order_idx + 1)) ** 3
             idx = order - 1
 
             # reorder the output and target
             if indices is not None and masks is not None:
                 target_idx = torch.permute(target, (0, 2, 3, 4, 1))
-                target_idx = target_idx[indices[:, 0], indices[:, 1], indices[:, 2], indices[:, 3],
-                             -idx:target_idx.size(4) - start_cnt]
+                target_idx = target_idx[
+                    indices[:, 0],
+                    indices[:, 1],
+                    indices[:, 2],
+                    indices[:, 3],
+                    -idx : target_idx.size(4) - start_cnt,
+                ]
                 model_output_idx = torch.permute(model_output, (0, 2, 3, 4, 1))
-                model_output_idx = model_output_idx[indices[:, 0], indices[:, 1], indices[:, 2], indices[:, 3],
-                                   -idx:model_output_idx.size(4) - start_cnt]
+                model_output_idx = model_output_idx[
+                    indices[:, 0],
+                    indices[:, 1],
+                    indices[:, 2],
+                    indices[:, 3],
+                    -idx : model_output_idx.size(4) - start_cnt,
+                ]
 
                 ### assertion for order_idx = 0 [Remove due to compilation error!]
                 if order_idx == 0:
-                    real_assertion_flag = not ('use_normalize_std' in model_kwargs)
-                    self.assert_mask_correctness(batch_size, masks, target_idx, real_assert=real_assertion_flag)
+                    real_assertion_flag = not ("use_normalize_std" in model_kwargs)
+                    self.assert_mask_correctness(
+                        batch_size, masks, target_idx, real_assert=real_assertion_flag
+                    )
 
                 # compute loss
                 losses_order_idx = (target_idx - model_output_idx) ** 2
-                losses_order_idx = losses_order_idx.view(-1, losses_order_idx.size(-1))  ## get reshape
+                losses_order_idx = losses_order_idx.view(
+                    -1, losses_order_idx.size(-1)
+                )  ## get reshape
 
                 ## masking un related loss
                 losses_order_idx_masked = losses_order_idx * masks.unsqueeze(1)
-                losses_order_idx_masked = losses_order_idx_masked.view(batch_size, -1, losses_order_idx_masked.size(-1))
+                losses_order_idx_masked = losses_order_idx_masked.view(
+                    batch_size, -1, losses_order_idx_masked.size(-1)
+                )
 
                 ## compute the loss
-                loss_order_idx = sum_flat(losses_order_idx_masked) / torch.sum(model_kwargs['high_values_mask'], dim=1)
+                loss_order_idx = sum_flat(losses_order_idx_masked) / torch.sum(
+                    model_kwargs["high_values_mask"], dim=1
+                )
             else:
-                target_idx = target[:, -idx:target.size(1) - start_cnt]
-                model_output_idx = model_output[:, -idx:model_output.size(1) - start_cnt]
+                target_idx = target[:, -idx : target.size(1) - start_cnt]
+                model_output_idx = model_output[
+                    :, -idx : model_output.size(1) - start_cnt
+                ]
                 loss_order_idx = mean_flat((target_idx - model_output_idx) ** 2)
 
             ### update start cnt
             start_cnt = idx
 
-            if model_kwargs['no_rebalance_loss']:
+            if model_kwargs["no_rebalance_loss"]:
                 final_loss = final_loss + loss_order_idx
             else:
-                final_loss = final_loss + (
-                        base_loss.detach() / (loss_order_idx.detach() + eps)) * loss_order_idx
+                final_loss = (
+                    final_loss
+                    + (base_loss.detach() / (loss_order_idx.detach() + eps))
+                    * loss_order_idx
+                )
             stage_losses.append(loss_order_idx)
 
         return final_loss, stage_losses
@@ -1002,10 +1131,14 @@ class GaussianDiffusion:
             threshold = 0.0
 
         target_idx_assert = target_idx.view(batch_size, -1, target_idx.size(-1))
-        target_idx_assert = target_idx_assert[:, :target_idx_assert.size(1) // 2]  # remove the second half
+        target_idx_assert = target_idx_assert[
+            :, : target_idx_assert.size(1) // 2
+        ]  # remove the second half
         masks_idx = torch.logical_not(masks.view(batch_size, -1))
-        masks_idx = masks_idx[:, :masks_idx.size(1) // 2]  # remove the second half
-        target_idx_max = torch.max(torch.abs(target_idx_assert), dim=1, keepdim=True).values
+        masks_idx = masks_idx[:, : masks_idx.size(1) // 2]  # remove the second half
+        target_idx_max = torch.max(
+            torch.abs(target_idx_assert), dim=1, keepdim=True
+        ).values
         target_idx_mask = torch.abs(target_idx_assert) > target_idx_max * threshold
         target_idx_mask = torch.max(target_idx_mask, dim=-1).values > 0
         assertion_flag = torch.logical_or(masks_idx, target_idx_mask)
@@ -1097,7 +1230,8 @@ def _extract_into_tensor(arr, timesteps, broadcast_shape):
         res = res[..., None]
     return res.expand(broadcast_shape)
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
 class _WrappedModel:
@@ -1113,6 +1247,7 @@ class _WrappedModel:
         if self.rescale_timesteps:
             new_ts = new_ts.float() * (1000.0 / self.original_num_steps)
         return self.model(x, new_ts, **kwargs)
+
 
 class SpacedDiffusion(GaussianDiffusion):
     """
@@ -1158,6 +1293,7 @@ class SpacedDiffusion(GaussianDiffusion):
     def _scale_timesteps(self, t):
         # Scaling is done by the wrapped model.
         return t
+
 
 def space_timesteps(num_timesteps, section_counts):
     """
@@ -1211,5 +1347,6 @@ def space_timesteps(num_timesteps, section_counts):
         start_idx += size
     return set(all_steps)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pass
