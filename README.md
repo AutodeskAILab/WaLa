@@ -9,12 +9,15 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 ### [Project](https://www.research.autodesk.com/publications/generative-ai-make-a-shape/) [Page](https://), [ICLR paper](https://), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Colab demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 
 ### Tasks
-- [ ] Single-view to 3D inference code
-- [ ] Multi-view to 3D inference code
-- [ ] 16³ resolution Voxel to 3D inference code
-- [ ] Google Colab demo
+- [x] Single-view to 3D inference code
+- [x] Multi-view to 3D inference code
+- [ ] Multi-view-depth to 3D inference code
+- [x] 16³ resolution Voxel to 3D inference code
 - [ ] Point cloud to 3D inference code
 - [ ] Unconditional 3D generation inference code
+- [ ] Text to MV (MVDream) infrence code
+- [ ] Text to MD (MVDream) infrence code
+- [ ] Google Colab demo
 
 ## Getting Started
 
@@ -49,7 +52,7 @@ python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/ta
 For multi-view input, the model utilizes multiple images of the same object captured from different camera angles. These images should be named according to the index of the camera view parameters as described in [Data Formats](#data-formats)
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-RGB4-1B --multi_view_images examples/multi_view/000.png examples/multi_view/006.png examples/multi_view/010.png examples/multi_view/026.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-RGB4-1B --multi_view_images examples/multi_view/003.png examples/multi_view/006.png examples/multi_view/010.png examples/multi_view/026.png --output_dir examples --output_format obj
 ```
 
 
