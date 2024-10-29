@@ -461,16 +461,12 @@ class Trainer_Condition_Network(pl.LightningModule):
             and self.args.use_pointcloud_conditions
         ):
             condition_features = self.extract_input_features(
-                data, data_type="points", is_train=False, to_cuda=True
+                data, data_type="Pointcloud", is_train=False, to_cuda=True
             )
             latent = self.network.inference(
-                low_data[data_idx : data_idx + 1],
-                condition_features[data_idx : data_idx + 1],
+                condition_features.size(0),
+                condition_features,
                 None,
-                local_rank=0,
-                current_stage=self.current_stage,
-                return_wavelet_volume=return_wavelet_volume,
-                progress=progress,
             )
         elif (
             hasattr(self.args, "use_voxel_conditions")
