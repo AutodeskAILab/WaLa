@@ -65,6 +65,25 @@ This model uses a voxelized representation of the object with a resolution of 16
 python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/horse_16.json --output_dir examples --output_format obj
 ```
 
+### Pointcloud to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-PC-1B)
+
+The input data for this method is a pointcloud of a 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj
+```
+
+### Depth-map to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM6-1B)
+
+For depth-maps input, the model utilizes 6 depth-map images of the same object captured from different camera angles to create 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-DM6-1B --6dm examples/depth_maps/3.png examples/depth_maps/6.png examples/depth_maps/10.png examples/depth_maps/26.png examples/depth_maps/49.png examples/depth_maps/50.png --output_dir examples --output_format obj
+
+```
+
 
 ### Data Formats
 

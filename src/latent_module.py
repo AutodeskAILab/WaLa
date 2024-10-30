@@ -484,6 +484,21 @@ class Trainer_Condition_Network(pl.LightningModule):
                 return_wavelet_volume=return_wavelet_volume,
                 progress=progress,
             )
+        elif (
+            hasattr(self.args, "use_depth_conditions")
+            and self.args.use_depth_conditions
+        ):
+            condition_features = self.extract_input_features(
+                data, data_type="depth", is_train=False, to_cuda=True
+            )
+            img_idx = self.extract_img_idx(data, data_idx=data_idx)
+            print(img_idx)
+            latent = self.network.inference(
+                condition_features.size(0),
+                condition_features,
+                scale=self.args.scale,
+                image_index=img_idx,
+            )
         else:
             latent = self.network.inference(
                 low_data[data_idx : data_idx + 1],

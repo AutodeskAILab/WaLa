@@ -10,6 +10,7 @@ from src.dataset_utils import (
     get_voxel_data_json,
     get_image_transform_latent_model,
     get_pointcloud_data,
+    get_dm6_data,
 )
 from src.model_utils import Model
 import argparse
@@ -46,6 +47,12 @@ def add_args(parser):
         type=str,
         nargs="+",
         help="Path to input poincloud files. A 3D object will be generated from each pointcloud file.",
+    )
+    input_data_group.add_argument(
+        "--dm6",
+        type=str,
+        nargs="+",
+        help="Path to input 6 depth-map images. A 3D object will be generated from these depth-maps.",
     )
     parser.add_argument(
         "--model_name",
@@ -233,3 +240,30 @@ if __name__ == "__main__":
                 args.target_num_faces,
                 args.seed,
             )
+
+    elif args.dm6:
+        dm_views = [
+            int(os.path.basename(Path(dm).name).split(".")[0]) for dm in args.dm6
+        ]
+
+        data = get_dm6_data(
+            image_files=args.dm6,
+            views=dm_views,
+            image_transform=image_transform,
+            device=model.device,
+        )
+
+        data_idx = 0
+        save_dir = Path(args.output_dir) / Path(args.dm6[0]).stem
+
+        generate_3d_object(
+            model,
+            data,
+            data_idx,
+            args.scale,
+            args.diffusion_rescale_timestep,
+            save_dir,
+            args.output_format,
+            args.target_num_faces,
+            args.seed,
+        )
