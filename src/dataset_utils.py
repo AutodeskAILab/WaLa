@@ -237,3 +237,54 @@ def get_image_transform_latent_model():
     )
 
     return transform
+
+
+def get_pointcloud_data(pointcloud_file, device):
+    if isinstance(pointcloud_file, str):
+        file_base_name = osp.basename(pointcloud_file).split(".")[0]
+    else:
+        file_base_name = uuid.uuid4()
+
+    loaded_pointcloud = load_arr_file(
+        file=pointcloud_file, keys=["points"], file_type="h5df"
+    )
+
+    pointcloud = loaded_pointcloud["points"].astype(np.float32)
+    pointcloud = torch.from_numpy(pointcloud).to(device)
+    pointcloud = pointcloud.unsqueeze(0).float()
+
+    data = {}
+    data["Pointcloud"] = pointcloud
+    data["low"] = torch.zeros((1, 1, 46, 46, 46)).to(device)
+    data["id"] = [file_base_name]
+
+    return data
+
+
+def get_dm6_data(image_files, views, image_transform, device):
+
+    image_files = [
+        (
+            get_s3_object(image_file)
+            if isinstance(image_file, str) and image_file.startswith("s3://")
+            else image_file
+        )
+        for image_file in image_files
+    ]
+
+    file_base_name = uuid.uuid4()
+
+    images = [
+        image_transform(load_image(image_file)).to(device).unsqueeze(0).float()
+        for image_file in image_files
+    ]
+    images = torch.cat(images, dim=0).unsqueeze(0)
+    img_idx = torch.from_numpy(np.array(views)).long().unsqueeze(0).to(device)
+
+    data = {}
+    data["depth"] = images
+    data["img_idx"] = img_idx
+    data["low"] = torch.zeros((1, 1, 46, 46, 46)).to(device)
+    data["id"] = [file_base_name]
+
+    return data

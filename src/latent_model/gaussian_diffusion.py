@@ -376,6 +376,8 @@ class GaussianDiffusion:
                 # print(x_in.shape, t_in.shape, c_in.shape)
                 e_t_uncond, e_t = model(x_in, t_in, latent_codes=c_in).chunk(2)
                 # print(e_t_uncond.shape, e_t.shape)
+                if model_kwargs["guidance_scale"] is None:
+                    model_kwargs["guidance_scale"] = 3
                 model_output = e_t_uncond + model_kwargs["guidance_scale"] * (
                     e_t - e_t_uncond
                 )
@@ -580,7 +582,7 @@ class GaussianDiffusion:
         if noise is not None:
             img = noise
         else:
-            img = torch.randn(*shape, device=device)
+            img = torch.randn(shape, device=device)
         indices = list(range(self.num_timesteps))[::-1]
 
         if progress:
