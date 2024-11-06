@@ -1,12 +1,12 @@
 # WaLa
-![Static Badge](https://img.shields.io/badge/ICLR-2025-blue) [![arXiv](https://img.shields.io/badge/arXiv-2401.11067-b31b1b.svg)](https://arxiv.org/abs/2401.11067) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
+[![arXiv](https://img.shields.io/badge/arXiv-2401.11067-b31b1b.svg)](https://arxiv.org/abs/2401.11067) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 [![Huggingface space](https://img.shields.io/badge/🤗-Huggingface-yello.svg)](https://huggingface.co/models?search=ADSKAILab/WaLa)
 
 This is the official codebase for the ICLR paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
 PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
 
-### [Project](https://www.research.autodesk.com/publications/generative-ai-make-a-shape/) [Page](https://), [ICLR paper](https://), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Colab demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
+### [Project Page](https://www.research.autodesk.com/publications/generative-ai-make-a-shape/), [arxiv paper](https://arxiv.org/search/?query=aditya+sanghi&searchtype=all&source=header), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 
 ### Tasks
 - [x] Single-view to 3D inference code
@@ -15,9 +15,10 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 - [x] 16³ resolution Voxel to 3D inference code
 - [ ] Point cloud to 3D inference code
 - [ ] Unconditional 3D generation inference code
-- [ ] Text to MV (MVDream) infrence code
-- [ ] Text to MD (MVDream) infrence code
-- [ ] Google Colab demo
+- [ ] Text to MV (MVDream) infrence code and model weights
+- [ ] Text to MD (MVDream) infrence code and model weights
+- [x] Google Colab demo
+
 
 ## Getting Started
 
@@ -156,10 +157,10 @@ python run.py --model_name ADSKAILab/WaLa-DM6-1B --6dm examples/depth_maps/3.png
 
 ### Google Colab Demo
 
-To quickly try out the Make-A-Shape model without setting up your local environment, check out the [Google Colab Demo](https://colab.research.google.com/drive/1XIoeanLjXIDdLow6qxY7cAZ6YZpqY40d?usp=sharing).
+To quickly try out the WaLa models without setting up your local environment, check out the [Google Colab Demo](https://colab.research.google.com/drive/1XIoeanLjXIDdLow6qxY7cAZ6YZpqY40d?usp=sharing).
 
 
 ## Citation 
 
 **BibTeX:**
-
+TBC
