@@ -313,7 +313,7 @@ class Trainer_Condition_Network(pl.LightningModule):
             points_inputs = data["Pointcloud"]
             input_features = self.encoder(points_inputs.type(torch.FloatTensor).cuda())
         elif data_type == "Voxel":
-            voxels_inputs = data["Voxel_{}".format(self.args.voxel_resolution)]
+            voxels_inputs = data["voxels"]
             input_features = self.encoder(voxels_inputs)
             input_features = torch.permute(input_features, (0, 2, 3, 4, 1))
             input_features = input_features.view(
@@ -473,16 +473,10 @@ class Trainer_Condition_Network(pl.LightningModule):
             and self.args.use_voxel_conditions
         ):
             condition_features = self.extract_input_features(
-                data, data_type="voxels", is_train=False, to_cuda=True
+                data, data_type="Voxel", is_train=False, to_cuda=True
             )
             latent = self.network.inference(
-                low_data[data_idx : data_idx + 1],
-                condition_features[data_idx : data_idx + 1],
-                None,
-                local_rank=0,
-                current_stage=self.current_stage,
-                return_wavelet_volume=return_wavelet_volume,
-                progress=progress,
+                condition_features.size(0), condition_features, None
             )
         elif (
             hasattr(self.args, "use_depth_conditions")
