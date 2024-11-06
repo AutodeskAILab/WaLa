@@ -18,6 +18,7 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 - [ ] Text to MV (MVDream) infrence code and model weights
 - [ ] Text to MD (MVDream) infrence code and model weights
 - [x] Google Colab demo
+- [ ] 1.4B models 
 
 
 ## Getting Started
