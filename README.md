@@ -14,10 +14,10 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 - [x] Multi-view-depth to 3D inference code
 - [x] 16³ resolution Voxel to 3D inference code
 - [x] Point cloud to 3D inference code
-- [ ] Unconditional 3D generation inference code
-- [ ] Text to MV (MVDream) infrence code and model weights
-- [ ] Text to MD (MVDream) infrence code and model weights
 - [x] Google Colab demo
+- [ ] Text to Multi-view infrence code and model weights
+- [ ] Text to Multi-depthmap infrence code and model weights
+- [ ] Unconditional 3D generation inference code
 - [ ] 1.4B models 
 
 
