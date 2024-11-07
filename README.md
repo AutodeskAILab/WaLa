@@ -10,8 +10,10 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
 ### Tasks
 - [x] Single-view to 3D inference code
+- [ ] Sketch to 3D inference code
 - [x] Multi-view to 3D inference code
-- [x] Multi-view-depth to 3D inference code
+- [x] Multi-view-depth 6 to 3D inference code
+- [ ] Multi-view-depth 4 to 3D inference code
 - [x] 16³ resolution Voxel to 3D inference code
 - [x] Point cloud to 3D inference code
 - [x] Google Colab demo
