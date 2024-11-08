@@ -11,6 +11,7 @@ from src.dataset_utils import (
     get_image_transform_latent_model,
     get_pointcloud_data,
     get_dm6_data,
+    get_dm1_data,
     get_sketch_data
 )
 from src.model_utils import Model
@@ -58,6 +59,12 @@ def add_args(parser):
         help="Path to input 6 depth-map images. A 3D object will be generated from these depth-maps.",
     )
     input_data_group.add_argument(
+        "--dm1",
+        type=str,
+        nargs="+",
+        help="Path to input single depth-map images. A 3D object will be generated from this depth-map.",
+    )
+    input_data_group.add_argument(
         "--text_to_dm6",
         type=str,
         nargs="+",
@@ -90,6 +97,7 @@ def add_args(parser):
         #         "ADSKAILab/WaLa-VX16-1B",
         #         "ADSKAILab/WaLa-PC-1B",
         #         "ADSKAILab/WaLa-RGB4-1B"
+        #         "ADSKAILab/WaLa-DM1-1B"
         # ],
         help="Model name (default: %(default)s).",
     )
@@ -297,6 +305,31 @@ if __name__ == "__main__":
             args.target_num_faces,
             args.seed,
         )
+    
+    elif args.dm1:
+        for dm1_path in args.dm1:
+            data = get_dm1_data(
+                image_file=Path(dm1_path),
+                image_transform=image_transform,
+                device=model.device,
+                image_over_white=False,
+            )
+
+            data_idx = 0
+            save_dir = Path(args.output_dir) / Path(args.dm1[0]).stem
+
+            generate_3d_object(
+                model,
+                data,
+                data_idx,
+                args.scale,
+                args.diffusion_rescale_timestep,
+                save_dir,
+                args.output_format,
+                args.target_num_faces,
+                args.seed,
+            )
+
 
     elif args.text_to_dm6:
         text_input = str(args.text_to_dm6)
@@ -313,7 +346,6 @@ if __name__ == "__main__":
         for i, img in enumerate(images):
             output_path = os.path.join(save_dir, f"image_{i}.png")
             img.save(output_path, format = "PNG")
-
 
     elif args.text_to_mv:
         text_input = str(args.text_to_mv)
@@ -361,4 +393,3 @@ if __name__ == "__main__":
                 args.target_num_faces,
                 args.seed,
             )
-
