@@ -22,3 +22,8 @@ huggingface_hub
 dinov2
 backoff
 xformers
+diffusers
+omegaconf
+cloudpathlib
+transformers
+open-clip-torch==2.24.0 # https://github.com/kijai/ComfyUI-SUPIR/issues/143
