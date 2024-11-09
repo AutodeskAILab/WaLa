@@ -96,13 +96,23 @@ python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me
 
 ```
 
-### Depth-Maps to 3D
+### 6-View Depth-Maps to 3D
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM6-1B)
 
 For depth-maps input, the model utilizes 6 depth-map images of the same object captured from different camera angles to create 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-DM6-1B --6dm examples/depth_maps/3.png examples/depth_maps/6.png examples/depth_maps/10.png examples/depth_maps/26.png examples/depth_maps/49.png examples/depth_maps/50.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.png examples/depth_maps_6/6.png examples/depth_maps_6/10.png examples/depth_maps_6/26.png examples/depth_maps_6/49.png examples/depth_maps_6/50.png --output_dir examples --output_format obj
+
+```
+
+### 4-View Depth-Maps to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM4-1B)
+
+For depth-maps input, the model utilizes 4 depth-map images of the same object captured from different camera angles to create 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-DM4-1B --dm4 examples/depth_maps_4/3.png examples/depth_maps_4/6.png examples/depth_maps_4/10.png examples/depth_maps_4/26.png --output_dir examples --output_format obj
 
 ```
 

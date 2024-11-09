@@ -261,7 +261,7 @@ def get_pointcloud_data(pointcloud_file, device):
     return data
 
 
-def get_dm6_data(image_files, views, image_transform, device):
+def get_mv_dm_data(image_files, views, image_transform, device):
 
     image_files = [
         (
@@ -313,7 +313,7 @@ def get_sketch_data(image_file, image_transform, device, image_over_white=True):
 
     return data
 
-def get_dm1_data(image_file, image_transform, device, image_over_white=None):
+def get_sv_dm_data(image_file, image_transform, device, image_over_white=None):
     
     if isinstance(image_file, str):
         file_base_name = osp.basename(image_file).split(".")[0]

@@ -10,8 +10,8 @@ from src.dataset_utils import (
     get_voxel_data_json,
     get_image_transform_latent_model,
     get_pointcloud_data,
-    get_dm6_data,
-    get_dm1_data,
+    get_mv_dm_data,
+    get_sv_dm_data,
     get_sketch_data
 )
 from src.model_utils import Model
@@ -57,6 +57,12 @@ def add_args(parser):
         type=str,
         nargs="+",
         help="Path to input 6 depth-map images. A 3D object will be generated from these depth-maps.",
+    )
+    input_data_group.add_argument(
+        "--dm4",
+        type=str,
+        nargs="+",
+        help="Path to input 4 depth-map images. A 3D object will be generated from these depth-maps.",
     )
     input_data_group.add_argument(
         "--dm1",
@@ -284,7 +290,7 @@ if __name__ == "__main__":
             int(os.path.basename(Path(dm).name).split(".")[0]) for dm in args.dm6
         ]
 
-        data = get_dm6_data(
+        data = get_mv_dm_data(
             image_files=args.dm6,
             views=dm_views,
             image_transform=image_transform,
@@ -306,9 +312,36 @@ if __name__ == "__main__":
             args.seed,
         )
     
+    elif args.dm4:
+        dm_views = [
+            int(os.path.basename(Path(dm).name).split(".")[0]) for dm in args.dm4
+        ]
+
+        data = get_mv_dm_data(
+            image_files=args.dm4,
+            views=dm_views,
+            image_transform=image_transform,
+            device=model.device,
+        )
+
+        data_idx = 0
+        save_dir = Path(args.output_dir) / Path(args.dm4[0]).stem
+
+        generate_3d_object(
+            model,
+            data,
+            data_idx,
+            args.scale,
+            args.diffusion_rescale_timestep,
+            save_dir,
+            args.output_format,
+            args.target_num_faces,
+            args.seed,
+        )
+    
     elif args.dm1:
         for dm1_path in args.dm1:
-            data = get_dm1_data(
+            data = get_sv_dm_data(
                 image_file=Path(dm1_path),
                 image_transform=image_transform,
                 device=model.device,
