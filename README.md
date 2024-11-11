@@ -10,15 +10,15 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
 ### Tasks
 - [x] Single-view to 3D inference code
-- [ ] Sketch to 3D inference code
+- [x] Sketch to 3D inference code
 - [x] Multi-view to 3D inference code
+- [x] Multi-view-depth 4 to 3D inference code
 - [x] Multi-view-depth 6 to 3D inference code
-- [ ] Multi-view-depth 4 to 3D inference code
 - [x] 16³ resolution Voxel to 3D inference code
 - [x] Point cloud to 3D inference code
+- [x] Text to Multi-view infrence code and model weights
+- [x] Text to Multi-depthmap infrence code and model weights
 - [x] Google Colab demo
-- [ ] Text to Multi-view infrence code and model weights
-- [ ] Text to Multi-depthmap infrence code and model weights
 - [ ] Unconditional 3D generation inference code
 - [ ] 1.4B models 
 
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 
 ### Inference
 
-### Single-view to 3D
+### Single-View to 3D
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-SV-1B)
 
@@ -50,13 +50,43 @@ The input data for this method is a single-view image of a 3D object.
 python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/table.png --output_dir examples --output_format obj
 ```
 
-### Multi-view to 3D
+### Sketch to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-SK-1B)
+
+The model uses sketch input with detailed geometry and complex structures to generate 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.png --output_dir examples --output_format obj
+
+```
+
+### Multi-View to 3D
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-RGB4-1B)
 
 For multi-view input, the model utilizes multiple images of the same object captured from different camera angles. These images should be named according to the index of the camera view parameters as described in [Data Formats](#data-formats)
 
 ```sh
 python run.py --model_name ADSKAILab/WaLa-RGB4-1B --multi_view_images examples/multi_view/003.png examples/multi_view/006.png examples/multi_view/010.png examples/multi_view/026.png --output_dir examples --output_format obj
+```
+
+### 4-View Depth-Maps to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM4-1B)
+
+For depth-maps input, the model utilizes 4 depth-map images of the same object captured from different camera angles to create 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-DM4-1B --dm4 examples/depth_maps_4/3.png examples/depth_maps_4/6.png examples/depth_maps_4/10.png examples/depth_maps_4/26.png --output_dir examples --output_format obj
+
+```
+
+### 6-View Depth-Maps to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM6-1B)
+
+For depth-maps input, the model utilizes 6 depth-map images of the same object captured from different camera angles to create 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.png examples/depth_maps_6/6.png examples/depth_maps_6/10.png examples/depth_maps_6/26.png examples/depth_maps_6/49.png examples/depth_maps_6/50.png --output_dir examples --output_format obj
+
 ```
 
 
@@ -78,13 +108,32 @@ The input data for this method is a pointcloud of a 3D object.
 python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj
 ```
 
-### Depth-map to 3D
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM6-1B)
-
-For depth-maps input, the model utilizes 6 depth-map images of the same object captured from different camera angles to create 3D object.
+### Text to Multi-View
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-RGB4)
+The text input is used to generate four-view RGB images to support text-to-3D generation
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-DM6-1B --6dm examples/depth_maps/3.png examples/depth_maps/6.png examples/depth_maps/10.png examples/depth_maps/26.png examples/depth_maps/49.png examples/depth_maps/50.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me a cup" --output_dir examples
+
+```
+
+### Text to Depth-Maps
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-DM6)
+The text input is used to generate six-view depth maps to support text-to-3D generation
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
+
+```
+
+
+### Single Depth-Map to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM1-1B)
+
+The model uses single depth-map image to generate 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map/49.png --output_dir examples --output_format obj
 
 ```
 

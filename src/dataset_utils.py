@@ -261,7 +261,7 @@ def get_pointcloud_data(pointcloud_file, device):
     return data
 
 
-def get_dm6_data(image_files, views, image_transform, device):
+def get_mv_dm_data(image_files, views, image_transform, device):
 
     image_files = [
         (
@@ -280,6 +280,53 @@ def get_dm6_data(image_files, views, image_transform, device):
     ]
     images = torch.cat(images, dim=0).unsqueeze(0)
     img_idx = torch.from_numpy(np.array(views)).long().unsqueeze(0).to(device)
+
+    data = {}
+    data["depth"] = images
+    data["img_idx"] = img_idx
+    data["low"] = torch.zeros((1, 1, 46, 46, 46)).to(device)
+    data["id"] = [file_base_name]
+
+    return data
+
+
+def get_sketch_data(image_file, image_transform, device, image_over_white=True):
+    
+    if isinstance(image_file, str):
+        file_base_name = osp.basename(image_file).split(".")[0]
+        if image_file.startswith("s3://"):
+            image_file = get_s3_object(image_file)
+    else:
+        file_base_name = uuid.uuid4()
+
+    image = load_image(image_file, image_over_white=image_over_white)
+    image = image_transform(image)
+
+    images = image.to(device).unsqueeze(0).float()
+    img_idx = torch.from_numpy(np.array([0])).long().to(device)
+
+    data = {}
+    data["images"] = images
+    data["img_idx"] = img_idx
+    data["low"] = torch.zeros((1, 1, 46, 46, 46)).to(device)
+    data["id"] = [file_base_name]
+
+    return data
+
+def get_sv_dm_data(image_file, image_transform, device, image_over_white=None):
+    
+    if isinstance(image_file, str):
+        file_base_name = osp.basename(image_file).split(".")[0]
+        if image_file.startswith("s3://"):
+            image_file = get_s3_object(image_file)
+    else:
+        file_base_name = uuid.uuid4()
+
+    image = load_image(image_file, image_over_white=image_over_white)
+    image = image_transform(image)
+
+    images = image.to(device).unsqueeze(0).float()
+    img_idx = torch.from_numpy(np.array([0])).long().to(device)
 
     data = {}
     data["depth"] = images
