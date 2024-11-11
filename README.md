@@ -83,7 +83,7 @@ python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud
 The text input is used to generate four-view RGB images to support text-to-3D generation
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me a cup" --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me a cup" --output_dir examples
 
 ```
 
@@ -92,7 +92,7 @@ python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me
 The text input is used to generate six-view depth maps to support text-to-3D generation
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
 
 ```
 
@@ -132,7 +132,7 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 The model uses sketch input with detailed geometry and complex structures to generate 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/shoe_sketch.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.png --output_dir examples --output_format obj
 
 ```
 

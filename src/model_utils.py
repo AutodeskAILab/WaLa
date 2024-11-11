@@ -9,6 +9,7 @@ import json
 import backoff
 import urllib.error
 from huggingface_hub import hf_hub_download
+import re
 
 
 class DotDict(dict):
@@ -42,9 +43,10 @@ def load_latent_model(
     eval=True,
 ):
     with open(json_path, "r") as file:
-        args = json.load(file, object_hook=DotDict)
+        content = file.read()    
+        content = re.sub(r',\s*([\]}])', r'\1', content)
+        args = json.loads(content, object_hook=DotDict)
 
-    # print(args)
     model = Trainer_Condition_Network.load_from_checkpoint(
         checkpoint_path=checkpoint_path, map_location="cpu", args=args
     )
