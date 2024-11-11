@@ -43,9 +43,7 @@ def load_latent_model(
     eval=True,
 ):
     with open(json_path, "r") as file:
-        content = file.read()    
-        content = re.sub(r',\s*([\]}])', r'\1', content)
-        args = json.loads(content, object_hook=DotDict)
+        args = json.load(file, object_hook=DotDict)
 
     model = Trainer_Condition_Network.load_from_checkpoint(
         checkpoint_path=checkpoint_path, map_location="cpu", args=args
