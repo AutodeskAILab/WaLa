@@ -5,7 +5,7 @@
 This is the official codebase for the paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
 PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
-![Teaser Image](figures/image.png)
+![Teaser Image](figures/teaser.png)
 
 ### [Project Page](https://autodeskailab.github.io/WaLaProject), [arxiv paper](https://arxiv.org/search/?query=aditya+sanghi&searchtype=all&source=header), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 
