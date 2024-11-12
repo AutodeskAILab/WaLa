@@ -50,10 +50,12 @@ Based on our extensive grid search on the validation set across different condit
 | Voxel              | 1.5   | 5        |
 | Pointcloud         | 1.3   | 8        |
 | Single-View RGB    | 1.8   | 5        |
+| Sketch             | 1.8   | 5        |
 | Single-View Depth  | 1.8   | 5        |
 | Multi-View RGB     | 1.3   | 5        |
 | Multi-View Depth   | 1.3   | 5        |
 | 6 Multi-View Depth | 1.5   | 10       |
+| Text to 3d         | 1.5   | 10       |
 | Unconditional      | -     | 1000     |
 
 *Table: Classifier-free scale and timestep used in the paper*
@@ -222,7 +224,7 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 - **Voxel Input:** A JSON file containing a voxelized representation of the object. The JSON includes:
   - **resolution:** The grid size of the voxel space (e.g., 16 or 32).
   - **occupancy:** The indices of occupied voxels.
-  - **color:** The RGB values for each occupied voxel.
+  - **color:** The RGB values for each occupied voxel. 
 
 
 ### Google Colab Demo
