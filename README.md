@@ -142,14 +142,19 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 
 ### Text to Multi-View
 
-<div align="center">
-  <!-- Row 1: Images -->
-  <p style="display:inline-block; width:15%; text-align:center;">"An owl"</p>
-  <img src="figures/an_owl.gif" width="15%" alt="Image 1">
-  <p style="display:inline-block; width:15%; text-align:center;">"A monkey"</p>
-  <img src="figures/a_monkey.gif" width="15%" alt="Image 2">
-  <p style="display:inline-block; width:15%; text-align:center;">"A octopus"</p>
-  <img src="figures/a_octopus.gif" width="15%" alt="Image 3">
+<div align="center" style="display: flex; justify-content: center; align-items: center;">
+  <div style="text-align: center; margin: 0 10px;">
+    <p>"An owl"</p>
+    <img src="figures/an_owl.gif" width="100" alt="Image 1">
+  </div>
+  <div style="text-align: center; margin: 0 10px;">
+    <p>"A monkey"</p>
+    <img src="figures/a_monkey.gif" width="100" alt="Image 2">
+  </div>
+  <div style="text-align: center; margin: 0 10px;">
+    <p>"An octopus"</p>
+    <img src="figures/a_octopus.gif" width="100" alt="Image 3">
+  </div>
 </div>
 
 
