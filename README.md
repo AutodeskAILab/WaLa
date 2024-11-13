@@ -212,7 +212,15 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 To quickly try out the WaLa models without setting up your local environment, check out the [Google Colab Demo](https://colab.research.google.com/drive/1XIoeanLjXIDdLow6qxY7cAZ6YZpqY40d?usp=sharing).
 
 
-## Citation 
-
-**BibTeX:**
-TBC
+## Citation
+```bibtex
+@misc{sanghi2024waveletlatentdiffusionwala,
+      title={Wavelet Latent Diffusion (Wala): Billion-Parameter 3D Generative Model with Compact Wavelet Encodings}, 
+      author={Aditya Sanghi and Aliasghar Khani and Pradyumna Reddy and Arianna Rampini and Derek Cheung and Kamal Rahimi Malekshan and Kanika Madan and Hooman Shayani},
+      year={2024},
+      eprint={2411.08017},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2411.08017}, 
+}
+```
