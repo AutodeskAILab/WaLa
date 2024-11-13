@@ -102,6 +102,65 @@ python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.p
 
 ```
 
+### Voxel to 3D (16³ Resolution )
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-VX16-1B)
+
+This model uses a voxelized representation of the object with a resolution of 16³. The voxel file is a JSON containing the following keys: `resolution`, `occupancy`, and `color`
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/horse_16.json --output_dir examples --output_format obj
+```
+
+### Pointcloud to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-PC-1B)
+
+The input data for this method is a pointcloud of a 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj
+```
+
+### Text to Depth-Maps
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-DM6)
+The text input is used to generate six-view depth maps to support text-to-3D generation
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
+
+```
+
+
+### Single Depth-Map to 3D
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM1-1B)
+
+The model uses single depth-map image to generate 3D object.
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map/49.png --output_dir examples --output_format obj
+
+```
+
+### Text to Multi-View
+
+<div align="center">
+  <!-- Row 1: Images -->
+  <p style="display:inline-block; width:15%; text-align:center;">"An owl"</p>
+  <img src="figures/an_owl.gif" width="15%" alt="Image 1">
+  <p style="display:inline-block; width:15%; text-align:center;">"A monkey"</p>
+  <img src="figures/a_monkey.gif" width="15%" alt="Image 2">
+  <p style="display:inline-block; width:15%; text-align:center;">"A octopus"</p>
+  <img src="figures/a_octopus.gif" width="15%" alt="Image 3">
+</div>
+
+
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-RGB4)
+The text input is used to generate four-view RGB images to support text-to-3D generation
+
+```sh
+python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me a cup" --output_dir examples
+
+```
+
 ### Multi-View to 3D
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-RGB4-1B)
 
@@ -131,53 +190,6 @@ python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.p
 
 ```
 
-
-### Voxel to 3D (16³ Resolution )
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-VX16-1B)
-
-This model uses a voxelized representation of the object with a resolution of 16³. The voxel file is a JSON containing the following keys: `resolution`, `occupancy`, and `color`
-
-```sh
-python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/horse_16.json --output_dir examples --output_format obj
-```
-
-### Pointcloud to 3D
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-PC-1B)
-
-The input data for this method is a pointcloud of a 3D object.
-
-```sh
-python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj
-```
-
-### Text to Multi-View
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-RGB4)
-The text input is used to generate four-view RGB images to support text-to-3D generation
-
-```sh
-python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me a cup" --output_dir examples
-
-```
-
-### Text to Depth-Maps
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-DM6)
-The text input is used to generate six-view depth maps to support text-to-3D generation
-
-```sh
-python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
-
-```
-
-
-### Single Depth-Map to 3D
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM1-1B)
-
-The model uses single depth-map image to generate 3D object.
-
-```sh
-python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map/49.png --output_dir examples --output_format obj
-
-```
 
 
 ### Data Formats
