@@ -212,7 +212,8 @@ python run.py --model_name ADSKAILab/WaLa-MVDream-RGB4 --text_to_mv "generate me
 For multi-view input, the model utilizes multiple images of the same object captured from different camera angles. These images should be named according to the index of the camera view parameters as described in [Data Formats](#data-formats)
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-RGB4-1B --multi_view_images examples/multi_view/003.png examples/multi_view/006.png examples/multi_view/010.png examples/multi_view/026.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-RGB4-1B --multi_view_images examples/multi_view/003.png examples/multi_view/006.png examples/multi_view/010.png examples/multi_view/026.png --output_dir examples --output_format obj --scale 1.3 --diffusion_rescale_timestep 5
+
 ```
 
 ### 4-View Depth-Maps to 3D
@@ -221,7 +222,7 @@ python run.py --model_name ADSKAILab/WaLa-RGB4-1B --multi_view_images examples/m
 For depth-maps input, the model utilizes 4 depth-map images of the same object captured from different camera angles to create 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-DM4-1B --dm4 examples/depth_maps_4/3.png examples/depth_maps_4/6.png examples/depth_maps_4/10.png examples/depth_maps_4/26.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-DM4-1B --dm4 examples/depth_maps_4/3.png examples/depth_maps_4/6.png examples/depth_maps_4/10.png examples/depth_maps_4/26.png --output_dir examples --output_format obj --scale 1.3 --diffusion_rescale_timestep 5
 
 ```
 
@@ -231,7 +232,7 @@ python run.py --model_name ADSKAILab/WaLa-DM4-1B --dm4 examples/depth_maps_4/3.p
 For depth-maps input, the model utilizes 6 depth-map images of the same object captured from different camera angles to create 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.png examples/depth_maps_6/6.png examples/depth_maps_6/10.png examples/depth_maps_6/26.png examples/depth_maps_6/49.png examples/depth_maps_6/50.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.png examples/depth_maps_6/6.png examples/depth_maps_6/10.png examples/depth_maps_6/26.png examples/depth_maps_6/49.png examples/depth_maps_6/50.png --output_dir examples --output_format obj --scale 1.5 --diffusion_rescale_timestep 10
 
 ```
 
