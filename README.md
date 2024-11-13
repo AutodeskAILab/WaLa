@@ -1,5 +1,7 @@
+
 # WAVELET LATENT DIFFUSION (WALA)
 [![arXiv](https://img.shields.io/badge/arXiv-2401.11067-b31b1b.svg)](https://arxiv.org/pdf/2411.08017) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
+
 [![Huggingface space](https://img.shields.io/badge/🤗-Huggingface-yello.svg)](https://huggingface.co/models?search=ADSKAILab/WaLa)
 
 This is the official codebase for the paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
@@ -7,7 +9,7 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
 ![Teaser Image](figures/teaser.png)
 
-### [Project Page](https://autodeskailab.github.io/WaLaProject), [arxiv paper](https://arxiv.org/search/?query=aditya+sanghi&searchtype=all&source=header), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
+### [Project Page](https://autodeskailab.github.io/WaLaProject), [arxiv paper](https://arxiv.org/abs/2411.08017), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 
 ### Tasks
 - [x] Single-view to 3D inference code
@@ -314,10 +316,7 @@ python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.p
 To quickly try out the WaLa models without setting up your local environment, check out the [Google Colab Demo](https://colab.research.google.com/drive/1XIoeanLjXIDdLow6qxY7cAZ6YZpqY40d?usp=sharing).
 
 
-## Citation 
-
-If you find this work useful, please cite as follows:
-
+## Citation
 ```bibtex
 @misc{sanghi2024waveletlatentdiffusionwala,
       title={Wavelet Latent Diffusion (Wala): Billion-Parameter 3D Generative Model with Compact Wavelet Encodings}, 
@@ -328,3 +327,4 @@ If you find this work useful, please cite as follows:
       primaryClass={cs.CV},
       url={https://arxiv.org/abs/2411.08017}
 }
+
