@@ -62,6 +62,15 @@ Based on our extensive grid search on the validation set across different condit
 
 ### Single-View to 3D
 
+
+<div align="center">
+  <!-- Row 1: Images -->
+  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_image.png" width="20%" alt="Image 1">
+  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_pred.gif" width="20%" alt="Image 2">
+  <img src="figures/fadee469e8884b25a3ca460760a16999_image.png" width="20%" alt="Image 3">
+   <img src="figures/fadee469e8884b25a3ca460760a16999_pred.gif" width="20%" alt="Image 3">
+</div>
+
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-SV-1B)
 
 The input data for this method is a single-view image of a 3D object.
