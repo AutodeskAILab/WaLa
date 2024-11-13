@@ -30,8 +30,8 @@ from src.diffusion_modules.nn import (
     checkpoint,
 )
 from src.latent_model.utils import *
-from src.latent_model.dit_utils import DiT
-from src.latent_model.uvit_utils import Latent_UVIT
+from src.latent_model.latent_dit_utils import DiT
+from src.latent_model.latent_uvit_utils import Latent_UVIT
 
 # Main Model
 
@@ -92,8 +92,6 @@ class get_model(nn.Module):
         # Initialize sampler
         self.sampler = self.initialize_sampler()
 
-        if self.args.latent_normalization:
-            self.set_normalizing_stuff()
 
     def reset_diffusion_module(self):
         betas = get_named_beta_schedule(
@@ -306,28 +304,7 @@ class get_model(nn.Module):
         else:
             raise Exception("Unknown Sampler...")
 
-    def set_normalizing_stuff(self):
-        """Set normalizing parameters."""
-        from adsk_ailab_ray.tools.aws import aws_s3_cp, aws_s3_sync
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            local_file_path = f"{temp_dir}/latent_mean_variance_std.npz"
-            aws_s3_cp(
-                "s3://clip-guided-3d-gen/latent_mean_variance_std.npz", local_file_path
-            )
-            # Load the .npz file using numpy
-            data = np.load(local_file_path)
-
-        # Small epsilon to avoid division by zero
-
-        epsilon = 1e-8
-        mean_value = data["mean"]
-        variance_value = data["variance"]
-        std_value = np.sqrt(variance_value + epsilon)
-        self.mean_value = torch.tensor(mean_value)
-        self.variance_value = torch.tensor(variance_value)
-        self.std_value = torch.tensor(std_value)
+ 
 
     def process_condition(self, condition, image_index=None):
         """Process and apply condition mappings."""
@@ -414,25 +391,11 @@ class get_model(nn.Module):
             },
         )
 
-        if self.args.latent_normalization:
-            # Ensure mean and std are on the same device and have the same dtype as samples
-            mean_value = self.mean_value.to(samples.device).to(samples.dtype)
-            std_value = self.std_value.to(samples.device).to(samples.dtype)
-
-            # Adjust samples
-            samples = (samples * std_value) + mean_value
-
         return samples
 
     def training_losses(self, data_input, condition=None, image_index=None):
         """Compute training losses."""
         t, weights = self.sampler.sample(data_input.size(0), device=data_input.device)
-
-        if self.args.latent_normalization:
-            mean_value = self.mean_value.to(data_input.device).to(data_input.dtype)
-            std_value = self.std_value.to(data_input.device).to(data_input.dtype)
-            # Normalize data_input
-            data_input = (data_input - mean_value) / std_value
 
         if self.args.dp_cond is not None and condition is not None:
             anti_mask = (

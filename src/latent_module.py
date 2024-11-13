@@ -39,7 +39,7 @@ from src.latent_model.points_network import (
     PointNet_Large,
     PointNet_Simple,
 )
-from src.networks.voxels_network import (
+from src.latent_model.voxels_network import (
     Encoder_Down_Interpolate,
     Encoder_Down_2,
 )
