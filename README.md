@@ -99,7 +99,7 @@ python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/ta
 The model uses sketch input with detailed geometry and complex structures to generate 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.png --output_dir examples --output_format obj --scale 1.8 --diffusion_rescale_timestep 5
+python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/tree.png --output_dir examples --output_format obj --scale 1.8 --diffusion_rescale_timestep 5
 
 ```
 
@@ -174,7 +174,14 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 ```sh
 python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
 
-python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.png examples/depth_maps_6/6.png examples/depth_maps_6/10.png examples/depth_maps_6/26.png examples/depth_maps_6/49.png examples/depth_maps_6/50.png --output_dir examples --output_format obj
+mv examples/text/depth_maps/image_0.png examples/text/depth_maps/3.png; \
+mv examples/text/depth_maps/image_1.png examples/text/depth_maps/6.png; \
+mv examples/text/depth_maps/image_2.png examples/text/depth_maps/10.png; \
+mv examples/text/depth_maps/image_3.png examples/text/depth_maps/26.png; \
+mv examples/text/depth_maps/image_4.png examples/text/depth_maps/49.png; \
+mv examples/text/depth_maps/image_5.png examples/text/depth_maps/50.png
+
+python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/text/depth_maps/3.png examples/text/depth_maps/6.png examples/text/depth_maps/10.png examples/text/depth_maps/26.png examples/text/depth_maps/49.png examples/text/depth_maps/50.png --output_dir examples/text/ --output_format obj --output_format obj --scale 1.5 --diffusion_rescale_timestep 10
 
 ```
 
