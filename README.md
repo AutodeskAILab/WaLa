@@ -174,7 +174,7 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 | ![An owl](figures/an_owl.gif) | ![A monkey](figures/a_monkey.gif) | ![An octopus](figures/a_octopus.gif) |
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
+python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples/text/
 
 mv examples/text/depth_maps/image_0.png examples/text/depth_maps/3.png; \
 mv examples/text/depth_maps/image_1.png examples/text/depth_maps/6.png; \
