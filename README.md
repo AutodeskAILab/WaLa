@@ -123,6 +123,17 @@ python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/h
 ```
 
 ### Pointcloud to 3D
+
+<div align="center">
+  <!-- Row 1: Images -->
+  <img src="figures/ff7093a08a36417cb298569f2a152dd3_pc.png" width="15%" alt="Image 1">
+  <img src="figures/ff7093a08a36417cb298569f2a152dd3_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/wheel_0010_pc.png" width="15%" alt="Image 2">
+  <img src="figures/wheel_0010_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/ff984c1a6da1422bbae70c772d3dab04_pc.png" width="15%" alt="Image 3">
+  <img src="figures/ff984c1a6da1422bbae70c772d3dab04_pred.gif" width="15%" alt="Image 3">
+</div>
+
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-PC-1B)
 
 The input data for this method is a pointcloud of a 3D object.
@@ -132,6 +143,7 @@ python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud
 ```
 
 ### Single Depth-Map to 3D
+
 <div align="center">
   <!-- Row 1: Images -->
   <img src="figures/98714_image.png" width="15%" alt="Image 1">
