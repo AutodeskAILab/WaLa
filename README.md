@@ -77,7 +77,8 @@ Based on our extensive grid search on the validation set across different condit
 The input data for this method is a single-view image of a 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/table.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/table.png --output_dir examples --output_format obj --scale 1.8 --diffusion_rescale_timestep 5
+
 ```
 
 ### Sketch to 3D
@@ -98,7 +99,7 @@ python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/ta
 The model uses sketch input with detailed geometry and complex structures to generate 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.png --output_dir examples --output_format obj --scale 1.8 --diffusion_rescale_timestep 5
 
 ```
 
@@ -119,7 +120,8 @@ python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.p
 This model uses a voxelized representation of the object with a resolution of 16³. The voxel file is a JSON containing the following keys: `resolution`, `occupancy`, and `color`
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/horse_16.json --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/horse_16.json --output_dir examples --output_format obj --scale 1.5 --diffusion_rescale_timestep 5
+
 ```
 
 ### Pointcloud to 3D
@@ -139,7 +141,7 @@ python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/h
 The input data for this method is a pointcloud of a 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj --scale 1.3 --diffusion_rescale_timestep 8
 ```
 
 ### Single Depth-Map to 3D
@@ -159,7 +161,7 @@ python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud
 The model uses single depth-map image to generate 3D object.
 
 ```sh
-python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map/49.png --output_dir examples --output_format obj
+python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map/49.png --output_dir examples --output_format obj --scale 1.5 --diffusion_rescale_timestep 5
 
 ```
 

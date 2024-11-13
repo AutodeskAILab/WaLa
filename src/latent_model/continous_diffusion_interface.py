@@ -30,7 +30,7 @@ from src.diffusion_modules.nn import (
     checkpoint,
 )
 from src.latent_model.utils import *
-from src.latent_model.dit_utils import DiT
+from src.latent_model.latent_dit_utils import DiT
 from src.latent_model.latent_uvit_utils import Latent_UVIT
 
 # Main Model
