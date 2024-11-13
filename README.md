@@ -130,12 +130,23 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 
 ```
 
-### Text to Depth-Maps
+### Text to 3D
 
 | "An owl" | "A monkey" | "An octopus" |
 |:-------:|:----------:|:------------:|
 | ![An owl](figures/an_owl.gif) | ![A monkey](figures/a_monkey.gif) | ![An octopus](figures/a_octopus.gif) |
 
+```sh
+python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
+
+python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.png examples/depth_maps_6/6.png examples/depth_maps_6/10.png examples/depth_maps_6/26.png examples/depth_maps_6/49.png examples/depth_maps_6/50.png --output_dir examples --output_format obj
+
+```
+
+
+## More Conditions !!!
+
+### Text to Depth-Maps
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-DM6)
 The text input is used to generate six-view depth maps to support text-to-3D generation
 
@@ -143,8 +154,6 @@ The text input is used to generate six-view depth maps to support text-to-3D gen
 python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
 
 ```
-
-## More Conditions !!!
 
 ### Text to Multi-View
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-RGB4)
