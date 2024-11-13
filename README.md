@@ -318,8 +318,6 @@ To quickly try out the WaLa models without setting up your local environment, ch
 
 If you find this work useful, please cite as follows:
 
-**BibTeX:**
-
 ```bibtex
 @misc{sanghi2024waveletlatentdiffusionwala,
       title={Wavelet Latent Diffusion (Wala): Billion-Parameter 3D Generative Model with Compact Wavelet Encodings}, 
