@@ -119,14 +119,9 @@ class get_model(nn.Module):
 
         self.normalize_latent = args.normalize_latent
 
-        if args.quantizer_type == "ema":
-            self.quantize = EMAVectorQuantizer(args.n_e, args.e_dim, beta=args.beta)
-        elif args.quantizer_type == "ema_2":
-            self.quantize = EMAVectorQuantizer_2(args.n_e, args.e_dim, args.beta)
-        elif args.quantizer_type == "original":
-            self.quantize = VectorQuantizer2(
-                args.n_e, args.e_dim, beta=args.beta, normalize=args.normalize_latent
-            )
+        self.quantize = VectorQuantizer2(
+            args.n_e, args.e_dim, beta=args.beta, normalize=args.normalize_latent
+        )
 
         ### Local Model Hyperparameters
         high_size = (
@@ -157,8 +152,6 @@ class get_model(nn.Module):
             indices.shape[0], self.grid_size, self.grid_size, self.grid_size, -1
         )
         quant = ix_to_vectors.permute(0, 4, 1, 2, 3)
-        if self.normalize_latent == "tanh":
-            quant = torch.tanh(quant)
         return quant
 
     @torch.no_grad()
@@ -167,8 +160,6 @@ class get_model(nn.Module):
             indices.shape[0], self.grid_size, self.grid_size, self.grid_size, -1
         )
         ix_to_vectors = ix_to_vectors.permute(0, 4, 1, 2, 3)
-        if self.normalize_latent == "tanh":
-            ix_to_vectors = torch.tanh(ix_to_vectors)
         shape = self.decode(ix_to_vectors)
         return shape
 
@@ -208,8 +199,6 @@ class get_model(nn.Module):
         )
         h = self.encoder(data_samples)
         quant, emb_loss, info = self.quantize(h)
-        if self.normalize_latent == "tanh":
-            quant = torch.tanh(quant)
         return quant, emb_loss, info, {}
 
     def encode_to_pre_quant(
@@ -247,8 +236,6 @@ class get_model(nn.Module):
         )
         h = self.encoder(data_samples)
         quant, emb_loss, (_, _, _, indices) = self.quantize(h)
-        if self.normalize_latent == "tanh":
-            quant = torch.tanh(quant)
         indices = indices.view(quant.shape[0], -1)
         return h, indices.to(torch.int64), quant
 

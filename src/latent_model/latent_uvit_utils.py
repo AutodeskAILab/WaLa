@@ -8,6 +8,7 @@
 # GLIDE: https://github.com/openai/glide-text2im
 # MAE: https://github.com/facebookresearch/mae/blob/main/models_mae.py
 # --------------------------------------------------------
+# Code based on https://github.com/facebookresearch/DiT/blob/main/models.py 
 
 import torch
 import torch.nn as nn
