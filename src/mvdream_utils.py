@@ -3,44 +3,10 @@ import urllib.error
 
 import backoff
 import torch
-from src.diffusion_progressive_module import (
-    Trainer_Diffusion_Progressive_Network,
-)
 from src.mvdream_module import MVDreamModule
 from src.latent_module import Trainer_Condition_Network
 from huggingface_hub import hf_hub_download
 import os
-
-
-# Retry on:
-# AttributeError: 'S3File' object has no attribute 'read'
-# urllib.error.URLError: <urlopen error [Errno -3] Temporary failure in name resolution>
-@backoff.on_exception(backoff.expo, (AttributeError, urllib.error.URLError), max_time=120)
-def load_diffusion_progressive_model(
-    checkpoint_path,
-    compile_model,
-    device=None,
-    eval=True,
-):
-    model = Trainer_Diffusion_Progressive_Network.load_from_checkpoint(
-        checkpoint_path=checkpoint_path,
-        map_location="cpu",
-    )
-
-    if compile_model:
-        logging.info("Compiling models...")
-        model.network.training_losses = torch.compile(model.network.training_losses)
-        model.network.inference = torch.compile(model.network.inference)
-        if hasattr(model, "clip_model"):
-            model.clip_model.forward = torch.compile(model.clip_model.forward)
-        logging.info("Done Compiling models...")
-
-    if device is not None:
-        model = model.to(device)
-    if eval:
-        model.eval()
-
-    return model
 
 
 def load_mvdream_model(
