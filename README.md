@@ -64,12 +64,12 @@ Based on our extensive grid search on the validation set across different condit
 
 <div align="center">
   <!-- Row 1: Images -->
-  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_image.png" width="15%" alt="Image 1">
-  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/fadee469e8884b25a3ca460760a16999_image.png" width="15%" alt="Image 2">
-  <img src="figures/fadee469e8884b25a3ca460760a16999_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/fefde7c55f7f4df39feeb39f024e1e75_image.png" width="15%" alt="Image 3">
-  <img src="figures/fefde7c55f7f4df39feeb39f024e1e75_pred.gif" width="15%" alt="Image 3">
+  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_image.png" width="16%" alt="Image 1">
+  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/fadee469e8884b25a3ca460760a16999_image.png" width="16%" alt="Image 2">
+  <img src="figures/fadee469e8884b25a3ca460760a16999_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/fefde7c55f7f4df39feeb39f024e1e75_image.png" width="16%" alt="Image 3">
+  <img src="figures/fefde7c55f7f4df39feeb39f024e1e75_pred.gif" width="16%" alt="Image 3">
 </div>
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-SV-1B)
@@ -84,12 +84,12 @@ python run.py --model_name ADSKAILab/WaLa-SV-1B --images examples/single_view/ta
 
 <div align="center">
   <!-- Row 1: Images -->
-  <img src="figures/fc8607ad-b4b7-40ae-b33d-18f8a0896c50_image.png" width="15%" alt="Image 1">
-  <img src="figures/fc8607ad-b4b7-40ae-b33d-18f8a0896c50_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/whale_021_image.png" width="15%" alt="Image 2">
-  <img src="figures/whale_021_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/fd79c30bf108dced1b17743c18fb63dc_image.png" width="15%" alt="Image 3">
-  <img src="figures/fd79c30bf108dced1b17743c18fb63dc_pred.gif" width="15%" alt="Image 3">
+  <img src="figures/fc8607ad-b4b7-40ae-b33d-18f8a0896c50_image.png" width="16%" alt="Image 1">
+  <img src="figures/fc8607ad-b4b7-40ae-b33d-18f8a0896c50_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/whale_021_image.png" width="16%" alt="Image 2">
+  <img src="figures/whale_021_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/fd79c30bf108dced1b17743c18fb63dc_image.png" width="16%" alt="Image 3">
+  <img src="figures/fd79c30bf108dced1b17743c18fb63dc_pred.gif" width="16%" alt="Image 3">
 </div>
 
 
@@ -106,12 +106,12 @@ python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.p
 
 <div align="center">
   <!-- Row 1: Images -->
-  <img src="figures/fbee89bee5338798d4837a4534bf020b_voxel.png" width="15%" alt="Image 1">
-  <img src="figures/fbee89bee5338798d4837a4534bf020b_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/fc3772d2-344a-4f92-8b7c-03da1157ab89_voxel.png" width="15%" alt="Image 2">
-  <img src="figures/fc3772d2-344a-4f92-8b7c-03da1157ab89_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/fc14c1aa7831f4cbcaef18b2fd3fb17c_voxel.png" width="15%" alt="Image 3">
-  <img src="figures/fc14c1aa7831f4cbcaef18b2fd3fb17c_pred.gif" width="15%" alt="Image 3">
+  <img src="figures/fbee89bee5338798d4837a4534bf020b_voxel.png" width="16%" alt="Image 1">
+  <img src="figures/fbee89bee5338798d4837a4534bf020b_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/fc3772d2-344a-4f92-8b7c-03da1157ab89_voxel.png" width="16%" alt="Image 2">
+  <img src="figures/fc3772d2-344a-4f92-8b7c-03da1157ab89_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/fc14c1aa7831f4cbcaef18b2fd3fb17c_voxel.png" width="16%" alt="Image 3">
+  <img src="figures/fc14c1aa7831f4cbcaef18b2fd3fb17c_pred.gif" width="16%" alt="Image 3">
 </div>
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-VX16-1B)
@@ -126,12 +126,12 @@ python run.py --model_name ADSKAILab/WaLa-VX16-1B --voxel_files examples/voxel/h
 
 <div align="center">
   <!-- Row 1: Images -->
-  <img src="figures/ff7093a08a36417cb298569f2a152dd3_pc.png" width="15%" alt="Image 1">
-  <img src="figures/ff7093a08a36417cb298569f2a152dd3_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/wheel_0010_pc.png" width="15%" alt="Image 2">
-  <img src="figures/wheel_0010_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/ff984c1a6da1422bbae70c772d3dab04_pc.png" width="15%" alt="Image 3">
-  <img src="figures/ff984c1a6da1422bbae70c772d3dab04_pred.gif" width="15%" alt="Image 3">
+  <img src="figures/ff7093a08a36417cb298569f2a152dd3_pc.png" width="16%" alt="Image 1">
+  <img src="figures/ff7093a08a36417cb298569f2a152dd3_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/wheel_0010_pc.png" width="16%" alt="Image 2">
+  <img src="figures/wheel_0010_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/ff984c1a6da1422bbae70c772d3dab04_pc.png" width="16%" alt="Image 3">
+  <img src="figures/ff984c1a6da1422bbae70c772d3dab04_pred.gif" width="16%" alt="Image 3">
 </div>
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-PC-1B)
@@ -146,12 +146,12 @@ python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud
 
 <div align="center">
   <!-- Row 1: Images -->
-  <img src="figures/98714_image.png" width="15%" alt="Image 1">
-  <img src="figures/98714_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/98576_image.png" width="15%" alt="Image 2">
-  <img src="figures/98576_pred.gif" width="15%" alt="Image 2">
-  <img src="figures/fbce98f3-7b7b-4cdc-babd-ffaa3d840c79_image.png" width="15%" alt="Image 3">
-  <img src="figures/fbce98f3-7b7b-4cdc-babd-ffaa3d840c79_pred.gif" width="15%" alt="Image 3">
+  <img src="figures/98714_image.png" width="16%" alt="Image 1">
+  <img src="figures/98714_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/98576_image.png" width="16%" alt="Image 2">
+  <img src="figures/98576_pred.gif" width="16%" alt="Image 2">
+  <img src="figures/fbce98f3-7b7b-4cdc-babd-ffaa3d840c79_image.png" width="16%" alt="Image 3">
+  <img src="figures/fbce98f3-7b7b-4cdc-babd-ffaa3d840c79_pred.gif" width="16%" alt="Image 3">
 </div>
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM1-1B)
