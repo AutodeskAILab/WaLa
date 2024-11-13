@@ -142,20 +142,10 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 
 ### Text to Multi-View
 
-<div align="center" style="display: flex; justify-content: center; align-items: center;">
-  <div style="text-align: center; margin: 0 10px;">
-    <p>"An owl"</p>
-    <img src="figures/an_owl.gif" width="100" alt="Image 1">
-  </div>
-  <div style="text-align: center; margin: 0 10px;">
-    <p>"A monkey"</p>
-    <img src="figures/a_monkey.gif" width="100" alt="Image 2">
-  </div>
-  <div style="text-align: center; margin: 0 10px;">
-    <p>"An octopus"</p>
-    <img src="figures/a_octopus.gif" width="100" alt="Image 3">
-  </div>
-</div>
+| "An owl" | "A monkey" | "An octopus" |
+|:-------:|:----------:|:------------:|
+| ![An owl](figures/an_owl.gif) | ![A monkey](figures/a_monkey.gif) | ![An octopus](figures/a_octopus.gif) |
+
 
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-RGB4)
