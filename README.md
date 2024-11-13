@@ -120,16 +120,6 @@ The input data for this method is a pointcloud of a 3D object.
 python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud/ring.h5df --output_dir examples --output_format obj
 ```
 
-### Text to Depth-Maps
-[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-DM6)
-The text input is used to generate six-view depth maps to support text-to-3D generation
-
-```sh
-python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
-
-```
-
-
 ### Single Depth-Map to 3D
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM1-1B)
 
@@ -140,14 +130,23 @@ python run.py --model_name ADSKAILab/WaLa-DM1-1B --dm1 examples/single_depth_map
 
 ```
 
-### Text to Multi-View
+### Text to Depth-Maps
 
 | "An owl" | "A monkey" | "An octopus" |
 |:-------:|:----------:|:------------:|
 | ![An owl](figures/an_owl.gif) | ![A monkey](figures/a_monkey.gif) | ![An octopus](figures/a_octopus.gif) |
 
+[![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-DM6)
+The text input is used to generate six-view depth maps to support text-to-3D generation
 
+```sh
+python run.py --model_name ADSKAILab/WaLa-MVDream-DM6 --text_to_dm6 "generate me a cup" --output_dir examples
 
+```
+
+## More Conditions !!!
+
+### Text to Multi-View
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-MVDream-RGB4)
 The text input is used to generate four-view RGB images to support text-to-3D generation
 
