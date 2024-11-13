@@ -65,10 +65,12 @@ Based on our extensive grid search on the validation set across different condit
 
 <div align="center">
   <!-- Row 1: Images -->
-  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_image.png" width="20%" alt="Image 1">
-  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_pred.gif" width="20%" alt="Image 2">
-  <img src="figures/fadee469e8884b25a3ca460760a16999_image.png" width="20%" alt="Image 3">
-   <img src="figures/fadee469e8884b25a3ca460760a16999_pred.gif" width="20%" alt="Image 3">
+  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_image.png" width="15%" alt="Image 1">
+  <img src="figures/00987286_924241abfacd42962ff68e66_trimesh_000_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/fadee469e8884b25a3ca460760a16999_image.png" width="15%" alt="Image 3">
+  <img src="figures/fadee469e8884b25a3ca460760a16999_pred.gif" width="15%" alt="Image 3">
+  <img src="figures/fefde7c55f7f4df39feeb39f024e1e75_image.png" width="15%" alt="Image 3">
+  <img src="figures/fefde7c55f7f4df39feeb39f024e1e75_pred.gif" width="15%" alt="Image 3">
 </div>
 
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-SV-1B)
