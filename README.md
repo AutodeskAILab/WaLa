@@ -41,6 +41,8 @@ pip install -r requirements.txt
 
 ### Inference
 
+For multiple generation use different --seed parameter
+
 ### Optimal Parameters for `--scale` and `--diffusion_rescale_timestep`
 
 Based on our extensive grid search on the validation set across different conditions, the optimal parameters are shown below.
