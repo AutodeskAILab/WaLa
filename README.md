@@ -1,12 +1,12 @@
 # WaLa
-[![arXiv](https://img.shields.io/badge/arXiv-xxxx.yyyyy-b31b1b.svg)](https://arxiv.org/abs/xxxx.yyyyy) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
+[![arXiv](https://img.shields.io/badge/arXiv-2411.08017-b31b1b.svg)](https://arxiv.org/abs/2411.08017) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 [![Huggingface space](https://img.shields.io/badge/🤗-Huggingface-yello.svg)](https://huggingface.co/models?search=ADSKAILab/WaLa)
 
 This is the official codebase for the paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
 PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
 
-### [Project Page](https://autodeskailab.github.io/WaLaProject), [arxiv paper](https://arxiv.org/search/?query=aditya+sanghi&searchtype=all&source=header), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
+### [Project Page](https://autodeskailab.github.io/WaLaProject), [arxiv paper](2411.08017), [Models](https://huggingface.co/models?search=ADSKAILab/WaLa), [Demo](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
 
 ### Tasks
 - [x] Single-view to 3D inference code
