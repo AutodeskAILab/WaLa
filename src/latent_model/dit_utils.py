@@ -8,6 +8,8 @@
 # GLIDE: https://github.com/openai/glide-text2im
 # MAE: https://github.com/facebookresearch/mae/blob/main/models_mae.py
 # --------------------------------------------------------
+# Code based on https://github.com/facebookresearch/DiT/blob/main/models.py 
+
 
 import torch
 import torch.nn as nn
@@ -722,49 +724,3 @@ if __name__ == "__main__":
     output = model(x, t, latent_codes=condition)
     print(model)
     print(output.shape)
-    raise "err"
-
-    loss = F.mse_loss(output, x)
-
-    # Backward pass
-    loss.backward()
-
-    # Check gradients
-    for name, param in model.named_parameters():
-        if param.grad is None:
-            print(f"{name} has no gradient")
-        # elif param.grad.abs().sum() == 0:
-        #    print(f"{name} gradient is zero")
-
-    def collect_used_parameters(model, *input_tensors):
-        used_params = set()
-        hooks = []
-
-        def hook_fn(module, input, output):
-            for param in module.parameters():
-                used_params.add(param)
-
-        for name, module in model.named_modules():
-            if len(list(module.parameters())) > 0:
-                hook = module.register_forward_hook(hook_fn)
-                hooks.append(hook)
-
-        # Perform a forward pass
-        model(*input_tensors)
-
-        # Remove hooks
-        for hook in hooks:
-            hook.remove()
-
-        return used_params
-
-    used_params = collect_used_parameters(model, x, t, condition)
-
-    # print(mask_interface.inference(5, condition))
-
-    all_params = set(model.parameters())
-    unused_params = all_params - used_params
-
-    print("Unused parameters:", unused_params)
-    for param in unused_params:
-        print(param)
