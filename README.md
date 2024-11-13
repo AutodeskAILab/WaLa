@@ -103,6 +103,17 @@ python run.py --model_name ADSKAILab/WaLa-SK-1B --sketch examples/sketch/horse.p
 ```
 
 ### Voxel to 3D (16³ Resolution )
+
+<div align="center">
+  <!-- Row 1: Images -->
+  <img src="figures/fbee89bee5338798d4837a4534bf020b_voxel.png" width="15%" alt="Image 1">
+  <img src="figures/fbee89bee5338798d4837a4534bf020b_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/fc3772d2-344a-4f92-8b7c-03da1157ab89_voxel.png" width="15%" alt="Image 2">
+  <img src="figures/fc3772d2-344a-4f92-8b7c-03da1157ab89_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/fc14c1aa7831f4cbcaef18b2fd3fb17c_voxel.png" width="15%" alt="Image 3">
+  <img src="figures/fc14c1aa7831f4cbcaef18b2fd3fb17c_pred.gif" width="15%" alt="Image 3">
+</div>
+
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-VX16-1B)
 
 This model uses a voxelized representation of the object with a resolution of 16³. The voxel file is a JSON containing the following keys: `resolution`, `occupancy`, and `color`
