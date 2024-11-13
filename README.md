@@ -132,6 +132,16 @@ python run.py --model_name ADSKAILab/WaLa-PC-1B --pointcloud examples/pointcloud
 ```
 
 ### Single Depth-Map to 3D
+<div align="center">
+  <!-- Row 1: Images -->
+  <img src="figures/98714_image.png" width="15%" alt="Image 1">
+  <img src="figures/98714_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/98576_image.png" width="15%" alt="Image 2">
+  <img src="figures/98576_pred.gif" width="15%" alt="Image 2">
+  <img src="figures/fbce98f3-7b7b-4cdc-babd-ffaa3d840c79_image.png" width="15%" alt="Image 3">
+  <img src="figures/fbce98f3-7b7b-4cdc-babd-ffaa3d840c79_pred.gif" width="15%" alt="Image 3">
+</div>
+
 [![Model on HF](https://huggingface.co/datasets/huggingface/badges/resolve/main/model-on-hf-sm.svg)](https://huggingface.co/ADSKAILab/WaLa-DM1-1B)
 
 The model uses single depth-map image to generate 3D object.
