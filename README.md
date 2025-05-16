@@ -31,28 +31,13 @@ conda activate wala
 pip install -r requirements.txt
 ```
 
-### Inference
+### Inference Optimization
 
-For multiple generation use different --seed parameter
+#### ONNX
 
-### Optimal Parameters for `--scale` and `--diffusion_rescale_timestep`
 
-Based on our extensive grid search on the validation set across different conditions, the optimal parameters are shown below.
 
-| Model              | Scale | Timestep |
-|--------------------|-------|----------|
-| Voxel              | 1.5   | 5        |
-| Pointcloud         | 1.3   | 8        |
-| Single-View RGB    | 1.8   | 5        |
-| Sketch             | 1.8   | 5        |
-| Single-View Depth  | 1.8   | 5        |
-| Multi-View RGB     | 1.3   | 5        |
-| Multi-View Depth   | 1.3   | 5        |
-| 6 Multi-View Depth | 1.5   | 10       |
-| Text to 3d         | 1.5   | 10       |
-| Unconditional      | -     | 1000     |
 
-*Table: Classifier-free scale and timestep used in the paper*
 
 ### Single-View to 3D
 
