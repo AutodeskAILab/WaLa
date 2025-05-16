@@ -1,8 +1,6 @@
 
 # WAVELET LATENT DIFFUSION (WALA) Optimization
-[![arXiv](https://img.shields.io/badge/arXiv-2401.11067-b31b1b.svg)](https://arxiv.org/pdf/2411.08017) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1W5zPXw9xWNpLTlU5rnq7g3jtIA2BX6aC?usp=sharing)
-
-[![Huggingface space](https://img.shields.io/badge/🤗-Huggingface-yello.svg)](https://huggingface.co/models?search=ADSKAILab/WaLa)
+[![arXiv](https://img.shields.io/badge/arXiv-2401.11067-b31b1b.svg)](https://arxiv.org/pdf/2411.08017)
 
 This is a modified codebase for the optimization of the paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
 PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
