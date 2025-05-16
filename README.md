@@ -4,7 +4,7 @@
 
 [![Huggingface space](https://img.shields.io/badge/🤗-Huggingface-yello.svg)](https://huggingface.co/models?search=ADSKAILab/WaLa)
 
-This is the official codebase for the paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
+This is a modified codebase for the optimization of the paper "**WAVELET LATENT DIFFUSION (WALA): BILLION-
 PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 
 ![Teaser Image](figures/teaser.png)
