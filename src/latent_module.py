@@ -148,6 +148,36 @@ class Trainer_Condition_Network(pl.LightningModule):
         # print(self.network)
         # print(self.encoder)
 
+
+    def forward(self, data):
+            # Generate prediction and save visualization
+            return_wavelet_volume=False
+            progress=True
+            low_data = data.type(torch.FloatTensor).to(self.device)
+
+
+            latent = self.network.inference(
+                low_data[data_idx : data_idx + 1],
+                None,
+                None,
+                local_rank=0,
+                current_stage=self.current_stage,
+                return_wavelet_volume=return_wavelet_volume,
+                progress=progress,
+            )
+
+            pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
+            wavelet_data_pred = WaveletData(
+                shape_list=self.dwt_sparse_composer.shape_list,
+                output_stage=self.args.max_training_level,
+                max_depth=self.args.max_depth,
+                wavelet_volume=pred,
+            )
+            low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
+
+            return low_pred, highs_pred
+
+            
     def setup_conditions(self):
         """Setup various condition modules based on the arguments."""
         if (
@@ -532,3 +562,5 @@ class Trainer_Condition_Network(pl.LightningModule):
                 obj_path=obj_path, samples=(low_pred, highs_pred)
             )
             return obj_path
+
+
