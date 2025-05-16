@@ -995,7 +995,7 @@ class Upsampler(nn.Module):
 
 
 class Resize(nn.Module):
-    def __init__(self, in_channels=None, learned=False, mode="bilinear"):
+    def __init__(self, in_channels=None, learned=False, mode="bicubic"):
         super().__init__()
         self.with_conv = learned
         self.mode = mode
