@@ -212,7 +212,7 @@ def get_image_transform(args, train_step=False):
         ]
 
     transform = transform + [
-        Resize(args.n_px, interpolation=Image.BICUBIC),
+        Resize(args.n_px, interpolation=Image.BILINEAR),
         CenterCrop(args.n_px),
         ToTensor(),
         Normalize(

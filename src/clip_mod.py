@@ -33,6 +33,7 @@ try:
 
     BICUBIC = InterpolationMode.BICUBIC
 except ImportError:
+    
     BICUBIC = Image.BICUBIC
 
 
