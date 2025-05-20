@@ -80,17 +80,7 @@ def load_ema_state_dict(checkpoint_path, args):
 
 #     return autoencoder_module.network
 
-def log_timings_to_comet(self, timings_dict, prefix="timing/"):
-    """
-    Log timing variables (t0 to t9) to Comet metrics.
-    Args:
-        timings_dict (dict): Dictionary with keys 't0', 't1', ..., 't9' and their float values.
-        prefix (str): Optional prefix for metric names.
-    """
-    for key, value in timings_dict.items():
-        if key.startswith('t') and key[1:].isdigit():
-            self.comet_experiment.log_metric(f"{prefix}{key}", value)
-            
+
 
 def setup_autoencoder(args):
     logging.info("Setting up Autoencoder")
@@ -424,7 +414,7 @@ class Trainer_Condition_Network(pl.LightningModule):
         # Return pre_quant or post_quant based on the pre_quant flag
         return pre_quant if self.args.pre_quant else post_quant
 
-    def save_visualization_obj(self, obj_path, samples):
+    def save_visualization_obj(self,experiments, obj_path, samples):
         """Save a visualization object."""
         low, highs = samples
         t7 = time.time()
@@ -439,7 +429,20 @@ class Trainer_Condition_Network(pl.LightningModule):
         vertices = (vertices / self.args.resolution) * 2.0 - 1.0
         triangles = triangles[:, ::-1]
         mcubes.export_obj(vertices, triangles, obj_path)
+        t10 = time.time()
         print('export obj time', time.time() - t9,'s')
+
+        times_7_9 = {
+            'Inverse DWT time elapsed': t8 - t7,
+            'mcubes.marching_cubes time': t9 - t8,
+            'export obj time': t10 - t9
+        }
+        for metric_name, value in times_7_9.items():
+            experiments.log_metric(metric_name, value)
+
+
+
+
     def save_visualization_sdf(self, obj_path, sdf):
         """Save a visualization SDF."""
         sdf = sdf.cpu().detach().numpy()
@@ -455,7 +458,7 @@ class Trainer_Condition_Network(pl.LightningModule):
         self.network.reset_diffusion_module()
 
     def inference_sample(
-        self, data, data_idx, return_wavelet_volume=False, progress=True
+        self, data, data_idx,experiments, return_wavelet_volume=False, progress=True
     ):
         # Generate prediction and save visualization
 
@@ -548,13 +551,26 @@ class Trainer_Condition_Network(pl.LightningModule):
         low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
         t5 = time.time()
         print('Low to Highs conversion', t5-t4,'s')
+
+
+        times_1_5 = {'Extract Image': t1-t0,
+         'Latent Diffusion Time': t2-t1,
+         'Latent Decoding Time': t3-t2, 
+         'Wavelet Preparation Time': t4-t3, 
+         'Low to Highs conversion': t5-t4}
+        
+        for metric_name, value in times_1_5.items():
+            experiments.log_metric(metric_name, value)        
         return low_pred, highs_pred
 
-    def test_inference(self, data, data_idx, save_dir, output_format="obj"):
+
+
+
+    def test_inference(self, data, data_idx,experiments, save_dir, output_format="obj"):
         file_name = data["id"][data_idx]
         with torch.no_grad():
             low_pred, highs_pred = self.inference_sample(
-                data, data_idx, return_wavelet_volume=False
+                data, data_idx,experiments, return_wavelet_volume=False
             )
 
         if output_format == "sdf":
@@ -564,10 +580,14 @@ class Trainer_Condition_Network(pl.LightningModule):
         else:
             t6 = time.time()
             obj_path = os.path.join(save_dir, f"{file_name}.obj")
-            self.save_visualization_obj(
+            self.save_visualization_obj(experiments,
                 obj_path=obj_path, samples=(low_pred, highs_pred)
             )
             print('Time to save visualization from high lows to obj', time.time() - t6,'s')
+            time6 = {'Time to save visualization from high lows to obj':time.time() - t6}
+
+            for metric_name, value in time6.items():
+                experiments.log_metric(metric_name,value)
             return obj_path
 
 
@@ -677,7 +697,23 @@ class Trainer_Condition_Network_new(pl.LightningModule):
                 )
                 low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
                 print('Wavelet Data Preparation', time.time() - t3,'s')
-                return low_pred, highs_pred
+
+
+
+                file_name = 'table'
+
+                t6 = time.time()
+                obj_path = os.path.join(save_dir, f"{file_name}.obj")
+                self.save_visualization_obj(experiments,
+                    obj_path=obj_path, samples=(low_pred, highs_pred)
+                )
+                print('Time to save visualization from high lows to obj', time.time() - t6,'s')
+                time6 = {'Time to save visualization from high lows to obj':time.time() - t6}
+
+                  
+
+
+                return obj_path
 
           
 
@@ -821,7 +857,7 @@ class Trainer_Condition_Network_new(pl.LightningModule):
         # Return pre_quant or post_quant based on the pre_quant flag
         return pre_quant if self.args.pre_quant else post_quant
 
-    def save_visualization_obj(self, obj_path, samples):
+    def save_visualization_obj(self,experiments, obj_path, samples):
         """Save a visualization object."""
         low, highs = samples
         sdf_recon = self.dwt_inverse_3d((low, highs))
