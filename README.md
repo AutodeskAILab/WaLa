@@ -10,10 +10,10 @@ PARAMETER 3D GENERATIVE MODEL WITH COM-PACT WAVELET ENCODINGS**"
 ### [Project Page](https://autodeskailab.github.io/WaLaProject), [arxiv paper](https://arxiv.org/abs/2411.08017)
 
 ### Tasks
-- [] 
-- [] 
-- []
-
+- [Add comet logged time checks] 
+- [Fix strealined forward function utility] 
+- [Check DWT tranaform function efficiency]
+- [Figure out ONNX export 'Exporting the operator 'aten::_upsample_bicubic2d_aa' to ONNX opset version 17 is not supported']
 
 
 ## Getting Started
