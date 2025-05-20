@@ -48,6 +48,7 @@ from src.latent_model.voxels_network import (
 from src.clip_mod import get_clip_model, tokenize
 from src.latent_model import wavelet_vq_model
 
+import time
 
 def load_ema_state_dict(checkpoint_path, args):
     print(f"Loading model from checkpoint: {checkpoint_path}")
@@ -79,6 +80,17 @@ def load_ema_state_dict(checkpoint_path, args):
 
 #     return autoencoder_module.network
 
+def log_timings_to_comet(self, timings_dict, prefix="timing/"):
+    """
+    Log timing variables (t0 to t9) to Comet metrics.
+    Args:
+        timings_dict (dict): Dictionary with keys 't0', 't1', ..., 't9' and their float values.
+        prefix (str): Optional prefix for metric names.
+    """
+    for key, value in timings_dict.items():
+        if key.startswith('t') and key[1:].isdigit():
+            self.comet_experiment.log_metric(f"{prefix}{key}", value)
+            
 
 def setup_autoencoder(args):
     logging.info("Setting up Autoencoder")
@@ -98,7 +110,7 @@ class Trainer_Geo_Network(pl.LightningModule):
         # print(self.network)
 
 ### MODIFIED TO LOAD CHECKPOINT SIMPLIFIED (_ORIGINAL)
-class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
+class Trainer_Condition_Network(pl.LightningModule):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -415,14 +427,19 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
     def save_visualization_obj(self, obj_path, samples):
         """Save a visualization object."""
         low, highs = samples
+        t7 = time.time()
         sdf_recon = self.dwt_inverse_3d((low, highs))
+        t8 = time.time()
+        print('Inverse DWT time elapsed', t8- t7,'s')
         vertices, triangles = mcubes.marching_cubes(
             sdf_recon.cpu().detach().numpy()[0, 0], 0.0
         )
+        t9 = time.time()
+        print('mcubes.marching_cubes time', t9-t8, 's')
         vertices = (vertices / self.args.resolution) * 2.0 - 1.0
         triangles = triangles[:, ::-1]
         mcubes.export_obj(vertices, triangles, obj_path)
-
+        print('export obj time', time.time() - t9,'s')
     def save_visualization_sdf(self, obj_path, sdf):
         """Save a visualization SDF."""
         sdf = sdf.cpu().detach().numpy()
@@ -445,10 +462,16 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
         low_data = data["low"].type(torch.FloatTensor).to(self.device)
 
         if self.args.use_image_conditions:
+            t0 = time.time()
+
             condition_features = self.extract_input_features(
                 data, data_type="image", is_train=False, to_cuda=True
             )
+           
             img_idx = self.extract_img_idx(data, data_idx=data_idx)
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
 
             latent = self.network.inference(
                 condition_features.size(0),
@@ -456,6 +479,9 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
                 scale=self.args.scale,
                 image_index=img_idx,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
         elif (
             hasattr(self.args, "use_pointcloud_conditions")
             and self.args.use_pointcloud_conditions
@@ -503,16 +529,25 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
                 return_wavelet_volume=return_wavelet_volume,
                 progress=progress,
             )
-
+        
         pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
+
+        t3 = time.time()
+        print('Latent Decoding Time', t3 - t2, 's')
+
         wavelet_data_pred = WaveletData(
             shape_list=self.dwt_sparse_composer.shape_list,
             output_stage=self.args.max_training_level,
             max_depth=self.args.max_depth,
             wavelet_volume=pred,
         )
-        low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
 
+        t4 = time.time()
+
+        print('Wavelet Preparation Time', t4-t3,'s')
+        low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
+        t5 = time.time()
+        print('Low to Highs conversion', t5-t4,'s')
         return low_pred, highs_pred
 
     def test_inference(self, data, data_idx, save_dir, output_format="obj"):
@@ -527,10 +562,12 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
             self.save_sdf(sdf_path, (low_pred, highs_pred))
             return sdf_path
         else:
+            t6 = time.time()
             obj_path = os.path.join(save_dir, f"{file_name}.obj")
             self.save_visualization_obj(
                 obj_path=obj_path, samples=(low_pred, highs_pred)
             )
+            print('Time to save visualization from high lows to obj', time.time() - t6,'s')
             return obj_path
 
 
@@ -548,7 +585,7 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
 
 
 
-class Trainer_Condition_Network(pl.LightningModule):
+class Trainer_Condition_Network_new(pl.LightningModule):
     def __init__(self, args):
         super().__init__()
         self.args = args
@@ -607,19 +644,31 @@ class Trainer_Condition_Network(pl.LightningModule):
                 low_data = low.type(torch.FloatTensor).to(self.device)
                 data_idx = 0
 
+                t0 = time.time()
+
                 condition_features = self.extract_input_features(
                     images,low,data_idx, data_type="image", is_train=False, to_cuda=True
                 )
+                t1= time.time()
+                print("Image Extraction", t1- t0,'s')
+
+
                 img_idx = self.extract_img_idx(images, data_idx=data_idx)
 
+                
                 latent = self.network.inference(
                     condition_features.size(0),
                     condition_features,
                     scale=self.args.scale,
                     image_index=img_idx,
                 )
+                t2 = time.time()
+                print('Latent Generation', t2 - t1, 's')
 
                 pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
+
+                t3 = time.time()
+                print('Latent Decoding via Autoencoder', t3-t2,'s')
                 wavelet_data_pred = WaveletData(
                     shape_list=self.dwt_sparse_composer.shape_list,
                     output_stage=self.args.max_training_level,
@@ -627,7 +676,7 @@ class Trainer_Condition_Network(pl.LightningModule):
                     wavelet_volume=pred,
                 )
                 low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
-
+                print('Wavelet Data Preparation', time.time() - t3,'s')
                 return low_pred, highs_pred
 
           
