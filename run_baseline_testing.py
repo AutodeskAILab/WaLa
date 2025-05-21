@@ -21,7 +21,7 @@ from PIL import Image
 
 from comet_ml import start
 from comet_ml.integration.pytorch import log_model
-
+import time
 experiment = start(
   api_key="mqrUAXjKBRul24uX6pxR3gRHX*eyJiYXNlVXJsIjoiaHR0cHM6Ly9jb21ldC5kZXYuY2xvdWRvcy5hdXRvZGVzay5jb20ifQ",
   project_name="wala-time-checks",
@@ -91,6 +91,10 @@ hyperparameters = {
 experiment.log_parameters(hyperparameters)
 
 
+print(f"Loading model")
+
+model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
+image_transform = get_image_transform_latent_model()
 
 ### Scanned Objects by Google Research
 google_test_img_path = Path(os.path.expanduser('~/test_images'))  # Expands '~' to the full home directory path
