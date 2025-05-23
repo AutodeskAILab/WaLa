@@ -414,7 +414,7 @@ class Trainer_Condition_Network(pl.LightningModule):
         # Return pre_quant or post_quant based on the pre_quant flag
         return pre_quant if self.args.pre_quant else post_quant
 
-    def save_visualization_obj(self,experiments, obj_path, samples):
+    def save_visualization_obj(self,experiments,image_name, obj_path, samples):
         """Save a visualization object."""
         low, highs = samples
         t7 = time.time()
@@ -437,9 +437,13 @@ class Trainer_Condition_Network(pl.LightningModule):
             'mcubes.marching_cubes time': t9 - t8,
             'export obj time': t10 - t9
         }
-        for metric_name, value in times_7_9.items():
-            experiments.log_metric(metric_name, value)
+        try:
 
+            for metric_name, value in times_7_9.items():
+                experiments.log_metric(metric_name, value)
+        except:
+            
+            pass
 
 
 
@@ -559,14 +563,18 @@ class Trainer_Condition_Network(pl.LightningModule):
          'Wavelet Preparation Time': t4-t3, 
          'Low to Highs conversion': t5-t4}
         
-        for metric_name, value in times_1_5.items():
-            experiments.log_metric(metric_name, value)        
+        try:
+            for metric_name, value in times_1_5.items():
+                experiments.log_metric(metric_name, value)        
+        except:
+            pass
+
         return low_pred, highs_pred
 
 
 
 
-    def test_inference(self, data, data_idx,experiments, save_dir, output_format="obj"):
+    def test_inference(self, data, data_idx,experiments,image_name, save_dir, output_format="obj"):
         file_name = data["id"][data_idx]
         with torch.no_grad():
             low_pred, highs_pred = self.inference_sample(
@@ -579,15 +587,21 @@ class Trainer_Condition_Network(pl.LightningModule):
             return sdf_path
         else:
             t6 = time.time()
-            obj_path = os.path.join(save_dir, f"{file_name}.obj")
-            self.save_visualization_obj(experiments,
+            obj_path = os.path.join(save_dir, f"{image_name}.obj")
+            self.save_visualization_obj(experiments,image_name,
                 obj_path=obj_path, samples=(low_pred, highs_pred)
             )
             print('Time to save visualization from high lows to obj', time.time() - t6,'s')
             time6 = {'Time to save visualization from high lows to obj':time.time() - t6}
 
-            for metric_name, value in time6.items():
-                experiments.log_metric(metric_name,value)
+            try:
+
+                for metric_name, value in time6.items():
+                    experiments.log_metric(metric_name,value)
+
+            except:
+
+                pass
             return obj_path
 
 
