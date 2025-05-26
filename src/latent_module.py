@@ -649,6 +649,10 @@ class Trainer_Condition_Network(pl.LightningModule):
 
         # Freeze autoencoder parameters
         # self.freeze_autoencoder()
+        print(args.max_depth)
+        print(args.wavelet)
+        print(args.padding_mode)
+        print(args.resolution)
 
         # Initialize sparse models
         self.dwt_sparse_composer = SparseComposer(
@@ -1093,29 +1097,12 @@ class Trainer_Condition_Network(pl.LightningModule):
 
 
 
-    def forward(self, data, data_idx,experiments, output_format="obj"):
+    def forward(self, data, data_idx= 0,experiments = None, output_format="obj"):
         file_name = data["id"][data_idx]
         with torch.no_grad():
             low_pred, highs_pred = self.inference_sample(
                 data, data_idx,experiments, return_wavelet_volume=False
             )
-            print(f"low_pred type: {type(low_pred)}")
-            print(f"highs_pred type: {type(highs_pred)}") 
-            if hasattr(low_pred, 'shape'): print(f"low_pred shape: {low_pred.shape}")
-            if hasattr(highs_pred, 'shape'): print(f"highs_pred shape: {highs_pred.shape}")
-            if hasattr(low_pred, 'dtype'): print(f"low_pred dtype: {low_pred.dtype}")
-            if hasattr(highs_pred, 'dtype'): print(f"highs_pred dtype: {highs_pred.dtype}")
-            if hasattr(low_pred, 'device'): print(f"low_pred device: {low_pred.device}")
-            if hasattr(highs_pred, 'device'): print(f"highs_pred device: {highs_pred.device}")
-            if hasattr(low_pred, 'requires_grad'): print(f"low_pred requires_grad: {low_pred.requires_grad}")
-            if hasattr(highs_pred, 'requires_grad'): print(f"highs_pred requires_grad: {highs_pred.requires_grad}")    
-            print("----- highs_pred contents -----")
-            for i, h in enumerate(highs_pred):
-                print(f"highs_pred[{i}] type: {type(h)}")
-                if hasattr(h, 'shape'): print(f"highs_pred[{i}] shape: {h.shape}")
-                if hasattr(h, 'dtype'): print(f"highs_pred[{i}] dtype: {h.dtype}")
-                if hasattr(h, 'device'): print(f"highs_pred[{i}] device: {h.device}")
-                if hasattr(h, 'requires_grad'): print(f"highs_pred[{i}] requires_grad: {h.requires_grad}")
 
             return low_pred,highs_pred
 
