@@ -152,7 +152,7 @@ class WaveletData(object):
         return low, highs
 
 
-def batch_extract_highs_from_values(
+def batch_extract_highs_from_values_OLD(
     output_stage,
     max_depth,
     shape_list,
@@ -215,6 +215,74 @@ def batch_extract_highs_from_values(
 
     return highs_recon
 
+
+def batch_extract_highs_from_values(  ##### ONNX Friendly modified
+    output_stage,
+    max_depth,
+    shape_list,
+    device,
+    batch_size,
+    highs_indices=None,
+    highs_values=None,
+):
+    cnt = 0
+    highs_recon = []
+    for idx in range(max_depth):
+        current_stage = (max_depth - 1) - idx
+
+        padding_size = (
+            shape_list[-1][0] * (2**current_stage) - shape_list[idx + 1][0]
+        ) // 2
+        target_shape = (
+            batch_size,
+            1,
+            7,
+            shape_list[idx + 1][0] + padding_size * 2,
+            shape_list[idx + 1][1] + padding_size * 2,
+            shape_list[idx + 1][2] + padding_size * 2,
+        )
+        high_new = torch.zeros(target_shape).to(device)
+
+        ### only those in output will be computed
+        if current_stage < output_stage:
+            assert highs_indices.size(0) == highs_values.size(0)
+
+            ## reshape to fit the shape
+            indices_len = 7 * ((2**current_stage) ** 3)
+            high_values_idx = highs_values[:, :, cnt : cnt + indices_len]
+            high_indices_idx = highs_indices[:, :, cnt : cnt + indices_len]
+            
+            # Flatten the last two dimensions for indexing
+            high_indices_idx = high_indices_idx.reshape(batch_size, -1, 5).long()
+            high_values_idx = high_values_idx.reshape(batch_size, -1)
+
+            # Create batch indices
+            batch_indices = torch.arange(batch_size, device=device).unsqueeze(1).repeat(1, high_indices_idx.size(1)).long()
+
+            # Use advanced indexing with batch indices
+            high_new[
+                batch_indices,
+                0,
+                high_indices_idx[:, :, 1],
+                high_indices_idx[:, :, 2],
+                high_indices_idx[:, :, 3],
+                high_indices_idx[:, :, 4],
+            ] = high_values_idx
+
+            cnt += indices_len
+
+        # remove padding
+        high_new = high_new[
+            :,
+            :,
+            :,
+            padding_size : high_new.size(3) - padding_size,
+            padding_size : high_new.size(4) - padding_size,
+            padding_size : high_new.size(5) - padding_size,
+        ]
+        highs_recon.append(high_new)
+
+    return highs_recon
 
 def padding_high_indices(batch_size, highs_indices):
     batch_size_pad = torch.arange(batch_size, device=highs_indices.device)
