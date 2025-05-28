@@ -73,14 +73,14 @@ torch.onnx.export(
     (data_onnx, data_idx),
     "model.onnx",
     export_params=True,
-    opset_version=17,
+    opset_version=19,
     do_constant_folding=True,
     input_names=['data', 'data_idx'],
-    output_names=['output'],
+    output_names=['low_pred', 'highs_pred'],
     verbose = True, # might make it faster?
     dynamo=True)
 
 # Validate the exported model
 onnx_model = onnx.load("model.onnx")
-onnx.checker.check_model(onnx_model)
+onnx.checker.check_model("model.onnx")
 print("✅ ONNX model exported and validated successfully")
