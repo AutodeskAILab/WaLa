@@ -6,34 +6,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+from src.diffusion_modules.dwt import DWTInverse3d
+import mcubes
+import time
+import torch
 
-def find_and_move_matching_files(source_folder, check_folder, destination_folder):
+def find_and_move_matching_files(source_folder, check_folder, destination_folder, TRT=False):
     """
     Finds files in source_folder with names that match files in check_folder,
     and moves the matching files from source_folder to destination_folder.
+    If TRT is True, expects source files to have '_trt' before .obj and matches them to check_folder files without '_trt'.
 
     Args:
         source_folder (str): Path to the folder containing files to potentially move.
         check_folder (str): Path to the folder containing the reference filenames.
         destination_folder (str): Path to the folder where matching files should be moved.
+        TRT (bool): If True, match source files with '_trt.obj' to check files with '.obj'.
     """
 
     try:
-        # Get filenames from the check_folder
-        check_files = set(os.listdir(check_folder))  # Use a set for faster lookup
+        check_files = set(os.listdir(check_folder))
+        print(f"[DEBUG] Files in check_folder ({check_folder}): {len(check_files)} found")
 
-        # Create the destination folder if it doesn't exist
         os.makedirs(destination_folder, exist_ok=True)
 
-        # Iterate through files in the source_folder
-        for filename in os.listdir(source_folder):
-            if filename in check_files:
+        source_files = os.listdir(source_folder)
+        print(f"[DEBUG] Files in source_folder ({source_folder}): {len(source_files)} found")
+
+        matches = 0
+        for filename in source_files:
+            match_name = filename
+            if TRT and filename.lower().endswith('_trt.obj'):
+                # Remove '_trt' before .obj to get the base name for matching
+                match_name = filename[:-8] + '.obj'  # Remove '_trt.obj', add '.obj'
+            if match_name in check_files:
+                matches += 1
                 source_path = os.path.join(source_folder, filename)
                 destination_path = os.path.join(destination_folder, filename)
-
-                # Move the matching file
                 shutil.move(source_path, destination_path)
                 print(f"Moved: {filename} from {source_folder} to {destination_folder}")
+            else:
+                print(f"[DEBUG] No match for: {filename} (match_name: {match_name})")
+
+        print(f"[DEBUG] Total matches moved: {matches}")
 
     except FileNotFoundError:
         print("Error: One or more folders not found.")
@@ -157,7 +172,24 @@ def benchmark_export(func, vertices, triangles, filename, flip_normals=False):
     end = time.time()
     return end - start
 
-    
+def save_visualization_obj(image_name, obj_path, samples):
+        """Save a visualization object."""
+        low, highs = samples
+        
+        args_max_depth = 3
+        args_wavelet = 'bior6.8'
+        args_padding_mode = 'constant'
+        args_resolution = 256
+
+        dwt_inverse_3d = DWTInverse3d(args_max_depth, args_wavelet,args_padding_mode )
+        sdf_recon = dwt_inverse_3d((low, highs))
+        vertices, triangles = mcubes.marching_cubes(
+            sdf_recon.cpu().detach().numpy()[0, 0], 0.0
+        )
+
+        vertices = (vertices / args_resolution) * 2.0 - 1.0
+        triangles = triangles[:, ::-1]
+        mcubes.export_obj(vertices, triangles, obj_path)   
 class Optim_Visualizations():
     
     
