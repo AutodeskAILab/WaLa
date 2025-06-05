@@ -3,22 +3,9 @@ import open3d as o3d
 import os
 import sys
 
-
 sys.path.append(str(Path.cwd().parent))
 
-
 from pytorch_lightning import seed_everything
-
-from src.dataset_utils import (
-    get_singleview_data,
-    get_multiview_data,
-    get_voxel_data_json,
-    get_image_transform_latent_model,
-    get_pointcloud_data,
-    get_mv_dm_data,
-    get_sv_dm_data,
-    get_sketch_data
-)
 from src.model_utils import Model
 from src.mvdream_utils import load_mvdream_model
 import argparse
@@ -46,13 +33,12 @@ output_format = 'obj'
 target_num_faces = None
 scale = 1.8
 seed = 42
-diffusion_rescale_timestep = 15
+diffusion_rescale_timestep = 10
 
 print(f"Loading model")
 
 
 model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
-image_transform = get_image_transform_latent_model()
 model.set_inference_fusion_params(
         scale, diffusion_rescale_timestep
     )
@@ -60,23 +46,22 @@ model.set_inference_fusion_params(
 
 single_image = Path('../examples/single_view/table.png')
 
-data_onnx = get_singleview_data(
-        image_file=Path(single_image),
-        image_transform=image_transform,
-        device=model.device,
-        image_over_white=False,
-    )
+data_onnx = {
+    'images': torch.zeros((1, 3, 224, 224)),  # Dummy tensor
+    'img_idx': torch.tensor([0], device='cuda:0'),
+    'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),  # Dummy tensor
+    'id': 'test'
+}
 data_idx = 0
 save_dir = Path(output_dir) 
 base_name = os.path.basename(single_image)
 image_name = os.path.splitext(base_name)[0]  
-data_onnx['id'] = 'test'     
 
 
 torch.onnx.export(
     model,
     (data_onnx, data_idx),
-    "model.onnx",
+    "model_10.onnx",
     export_params=True,
     opset_version=19,
     do_constant_folding=True,
@@ -86,6 +71,6 @@ torch.onnx.export(
     dynamo=True)
 
 # Validate the exported model
-onnx_model = onnx.load("model.onnx")
-onnx.checker.check_model("model.onnx")
+onnx_model = onnx.load("model_10.onnx")
+onnx.checker.check_model("model_10.onnx")
 print("✅ ONNX model exported and validated successfully")

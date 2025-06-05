@@ -251,10 +251,10 @@ if __name__ == "__main__":
     try:
         results = run_tensorrt_experiment(
             '../examples/single_view/',
-            "model_good_15_1.trt",
+            "model_10.1.trt",
             'giuliaa-optim',
             '/TRT/model_good_15_1.trt',
-            use_s3=True,
+            use_s3=False,
         )
     finally:
         # pop the one context we pushed at import time

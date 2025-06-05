@@ -172,7 +172,7 @@ def benchmark_export(func, vertices, triangles, filename, flip_normals=False):
     end = time.time()
     return end - start
 
-def save_visualization_obj(image_name, obj_path, samples):
+def save_visualization_obj(image_name, obj_path, samples, experiment = None):
         """Save a visualization object."""
         low, highs = samples
         
@@ -197,6 +197,17 @@ def save_visualization_obj(image_name, obj_path, samples):
         triangles = triangles[:, ::-1]
         mcubes.export_obj(vertices, triangles, obj_path)   
         print(f"Export OBJ time: {time.time() - export_time:.4f} seconds")
+        
+        try:
+           experiment.log_metric(
+                "mcubes.marching_cubes time", time.time() - marching_time
+            )
+           experiment.log_metric(
+                "export obj time", time.time() - export_time
+            )
+        except:
+            pass
+
 
 class Optim_Visualizations():
     
