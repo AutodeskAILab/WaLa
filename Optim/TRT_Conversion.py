@@ -15,7 +15,7 @@ local_onnx = 'model_10.onnx'
 local_data = 'model_10.onnx.data'
 trt_engine_path = "model_10.1.trt"
 trt_s3_key = '/TRT/model_10.1.trt'
-UPLOAD_TO_S3 = True  # <-- Set to True to upload, False to skip
+UPLOAD_TO_S3 = False  # <-- Set to True to upload, False to skip
 
 
 # --- DOWNLOAD ONNX AND DATA FILES FROM S3 IF NOT PRESENT ---
