@@ -1,6 +1,11 @@
 from pathlib import Path
 import open3d as o3d
 import os
+import sys
+
+
+sys.path.append(str(Path.cwd().parent))
+
 
 from pytorch_lightning import seed_everything
 
@@ -36,12 +41,12 @@ os.environ["XFORMERS_DISABLED"] = "1"
 
 model_name = 'ADSKAILab/WaLa-SV-1B'
 
-output_dir = 'examples/Test_Gen'
+output_dir = '../examples/Test_Gen'
 output_format = 'obj'
 target_num_faces = None
 scale = 1.8
 seed = 42
-diffusion_rescale_timestep = 5
+diffusion_rescale_timestep = 15
 
 print(f"Loading model")
 
@@ -53,7 +58,7 @@ model.set_inference_fusion_params(
     )
 
 
-single_image = Path('examples/single_view/table.png')
+single_image = Path('../examples/single_view/table.png')
 
 data_onnx = get_singleview_data(
         image_file=Path(single_image),
@@ -77,7 +82,7 @@ torch.onnx.export(
     do_constant_folding=True,
     input_names=['data', 'data_idx'],
     output_names=['low_pred', 'highs_pred'],
-    verbose = True, # might make it faster?
+    verbose = True, 
     dynamo=True)
 
 # Validate the exported model

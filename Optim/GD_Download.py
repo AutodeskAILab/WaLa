@@ -1,9 +1,10 @@
 # Usage
-#     python3 download_collection.py -o <collection_owner> -c <collection_name>
+#     sudo /home/rayhub-user/.conda/envs/wala/bin/python GD_Download.py -o "GoogleResearch" -c "Scanned Objects by Google Research" -d /GD_models -t /GD_Dataset_Single_View
 #
 # Description
-#     This script will download all models contained within a collection.
+#     This script will download all models contained within a collection, and extract the first image of the thumbnail.
 #
+
 import sys,json,requests
 import getopt
 import os
@@ -12,26 +13,24 @@ import zipfile
 from pathlib import Path
 
 def extract_first_thumbnail_from_zips(zip_dir, output_dir):
-    """
-    Extracts the first thumbnail image from each zip file in zip_dir
-    and saves it to output_dir with the zip file's stem as the filename.
-    """
     os.makedirs(output_dir, exist_ok=True)
     for zip_path in Path(zip_dir).glob('*.zip'):
-        with zipfile.ZipFile(zip_path, 'r') as z:
-            thumbnail_files = [f for f in z.namelist() if f.startswith('thumbnails/') and not f.endswith('/')]
-            if thumbnail_files:
-                thumb_file = thumbnail_files[0]
-                ext = Path(thumb_file).suffix
-                out_name = zip_path.stem + ext
-                out_path = Path(output_dir) / out_name
-                with z.open(thumb_file) as source, open(out_path, 'wb') as target:
-                    shutil.copyfileobj(source, target)
-                print(f"Extracted {thumb_file} from {zip_path.name} as {out_name}")
-
-
+        try:
+            with zipfile.ZipFile(zip_path, 'r') as z:
+                thumbnail_files = [f for f in z.namelist() if f.startswith('thumbnails/') and not f.endswith('/')]
+                if thumbnail_files:
+                    thumb_file = thumbnail_files[0]
+                    ext = Path(thumb_file).suffix
+                    out_name = zip_path.stem + ext
+                    out_path = Path(output_dir) / out_name
+                    with z.open(thumb_file) as source, open(out_path, 'wb') as target:
+                        shutil.copyfileobj(source, target)
+                    print(f"Extracted {thumb_file} from {zip_path.name} as {out_name}")
+        except zipfile.BadZipFile:
+            print(f"Warning: {zip_path} is not a valid zip file. Skipping.")
+            
 if sys.version_info[0] < 3:
-    raise Exception("Python 3 or greater is required. Try running `python3 download_collection.py`")
+    raise Exception("Python 3 or greater is required.")
 
 collection_name = ''
 owner_name = ''

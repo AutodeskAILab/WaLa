@@ -990,13 +990,10 @@ class Trainer_Condition_Network(pl.LightningModule):
 
 
 
-    def forward(self, data, data_idx= 0,experiments = None, output_format="obj"):
-        file_name = data["id"][data_idx]
+    def forward(self, data, data_idx = 0,  experiments = None, output_format="obj"):
+
         with torch.no_grad():
 
-            low_data = data["low"].type(torch.FloatTensor).to(self.device)
-
-       
             t0 = time.time()
 
             condition_features = self.extract_input_features(

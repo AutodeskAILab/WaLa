@@ -190,10 +190,12 @@ def save_visualization_obj(image_name, obj_path, samples):
         vertices = (vertices / args_resolution) * 2.0 - 1.0
         triangles = triangles[:, ::-1]
         mcubes.export_obj(vertices, triangles, obj_path)   
+
+
 class Optim_Visualizations():
     
     
-    def retrieve_and_plot(experiment, metric_names=None, metric_display_names=None, plotting=True):
+    def retrieve_and_plot(experiment,TRT = False, metric_names=None, metric_display_names=None, plotting=True):
         if metric_names is None:
             metric_names = [
                 "Extract Image",
@@ -206,6 +208,12 @@ class Optim_Visualizations():
                 "export obj time",
                 "Default Delta",
             ]
+        if TRT is True:
+            metric_names = [
+                "Default Delta",
+            ]
+
+
         if metric_display_names is None:
             metric_display_names = {
                 "Extract Image": "Image Extraction Time",
@@ -218,6 +226,12 @@ class Optim_Visualizations():
                 "export obj time": "Object File Writing Time",
                 "Default Delta": "Total Runtime"
 
+            }
+
+
+        if TRT is True:
+            metric_display_names = {
+                "Default Delta": "Total Runtime"
             }
 
         all_metric_data = {}
