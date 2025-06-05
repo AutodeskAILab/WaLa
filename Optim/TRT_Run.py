@@ -29,6 +29,30 @@ def load_engine(engine_path):
 
 
 
+def load_engine_from_s3(bucket_name, s3_key):
+    """
+    Loads a TensorRT engine directly from S3 into memory and checks buffer size.
+    """
+
+
+    s3 = boto3.client('s3')
+    # Get expected file size from S3
+    obj = s3.head_object(Bucket=bucket_name, Key=s3_key)
+    expected_size = obj['ContentLength']
+
+    engine_buffer = io.BytesIO()
+    s3.download_fileobj(bucket_name, s3_key, engine_buffer)
+    engine_buffer.seek(0)
+    actual_size = len(engine_buffer.getvalue())
+    print(f"S3 engine size: {expected_size} bytes, Downloaded buffer size: {actual_size} bytes")
+    if actual_size != expected_size:
+        raise RuntimeError("Downloaded engine size does not match S3 object size!")
+
+    logger = trt.Logger(trt.Logger.WARNING)
+    runtime = trt.Runtime(logger)
+    return runtime.deserialize_cuda_engine(engine_buffer.read())
+
+
 
 # Modern TensorRT inference function using tensor API
 def run_trt_inference(engine, input_data,stream,context):
@@ -43,98 +67,91 @@ def run_trt_inference(engine, input_data,stream,context):
         List of output numpy arrays
     """
 
-    # ensure our PyCUDA context is current
-    #cuda.Context.attach()
-   
+  
 
-    try:
-        # Get input and output tensor names
-        input_names = []
-        output_names = []
+    # Get input and output tensor names
+    input_names = []
+    output_names = []
+    
+    time_input_names = time.time()
+    for i in range(engine.num_io_tensors):
+        name = engine.get_tensor_name(i)
+        if engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
+            input_names.append(name)
+        else:
+            output_names.append(name)
+    print(f"Time to get input/output names: {time.time() - time_input_names:.4f} seconds")
+    # Prepare device memory
+    device_memory = []
+    
+    time_handle = time.time()
+    # Handle inputs
+    for i, name in enumerate(input_names):
+        if i >= len(input_data):
+            continue
+            
+        data = input_data[i]
         
-        time_input_names = time.time()
-        for i in range(engine.num_io_tensors):
-            name = engine.get_tensor_name(i)
-            if engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
-                input_names.append(name)
-            else:
-                output_names.append(name)
-        print(f"Time to get input/output names: {time.time() - time_input_names:.4f} seconds")
-        # Prepare device memory
-        device_memory = []
+        # Handle dynamic input shapes
+        if -1 in engine.get_tensor_shape(name):
+            context.set_input_shape(name, data.shape)
         
-        time_handle = time.time()
-        # Handle inputs
-        for i, name in enumerate(input_names):
-            if i >= len(input_data):
-                continue
-                
-            data = input_data[i]
-            
-            # Handle dynamic input shapes
-            if -1 in engine.get_tensor_shape(name):
-                context.set_input_shape(name, data.shape)
-            
-            # Allocate device memory and copy input data
-            mem = cuda.mem_alloc(data.nbytes)
-            cuda.memcpy_htod_async(mem, data, stream)
-            device_memory.append(mem)
-            context.set_tensor_address(name, int(mem))
-        print(f"Time to handle inputs: {time.time() - time_handle:.4f} seconds")
+        # Allocate device memory and copy input data
+        mem = cuda.mem_alloc(data.nbytes)
+        cuda.memcpy_htod_async(mem, data, stream)
+        device_memory.append(mem)
+        context.set_tensor_address(name, int(mem))
+    print(f"Time to handle inputs: {time.time() - time_handle:.4f} seconds")
 
-        # Prepare outputs
-        outputs = []
-        output_memory = []
+    # Prepare outputs
+    outputs = []
+    output_memory = []
+    
+    time_allocate = time.time()
+    # Allocate output memory
+    for name in output_names:
+        shape = context.get_tensor_shape(name)
+        dtype = trt.nptype(engine.get_tensor_dtype(name))
         
-        time_allocate = time.time()
-        # Allocate output memory
-        for name in output_names:
-            shape = context.get_tensor_shape(name)
-            dtype = trt.nptype(engine.get_tensor_dtype(name))
-            
-            # Allocate device memory for output
-            size = trt.volume(shape) * np.dtype(dtype).itemsize
-            mem = cuda.mem_alloc(size)
-            device_memory.append(mem)
-            output_memory.append(mem)
-            
-            # Set output tensor address
-            context.set_tensor_address(name, int(mem))
-            
-            # Create host output array
-            output = np.empty(shape, dtype=dtype)
-            outputs.append(output)
-        print(f"Time to allocate output memory: {time.time() - time_allocate:.4f} seconds")
+        # Allocate device memory for output
+        size = trt.volume(shape) * np.dtype(dtype).itemsize
+        mem = cuda.mem_alloc(size)
+        device_memory.append(mem)
+        output_memory.append(mem)
+        
+        # Set output tensor address
+        context.set_tensor_address(name, int(mem))
+        
+        # Create host output array
+        output = np.empty(shape, dtype=dtype)
+        outputs.append(output)
+    print(f"Time to allocate output memory: {time.time() - time_allocate:.4f} seconds")
 
-        # Run inference
-        time_asyncv3 = time.time()
-        context.execute_async_v3(stream_handle=stream.handle)
-        print(f"Async inference time: {time.time() - time_asyncv3:.4f} seconds")
+    # Run inference
+    time_asyncv3 = time.time()
+    context.execute_async_v3(stream_handle=stream.handle)
+    print(f"Async inference time: {time.time() - time_asyncv3:.4f} seconds")
 
-        time_copy = time.time()
-        # Copy outputs from device to host
-        for i, mem in enumerate(output_memory):
-            cuda.memcpy_dtoh_async(outputs[i], mem, stream)
-        print(f"Time to copy outputs: {time.time() - time_copy:.4f} seconds")
+    time_copy = time.time()
+    # Copy outputs from device to host
+    for i, mem in enumerate(output_memory):
+        cuda.memcpy_dtoh_async(outputs[i], mem, stream)
+    print(f"Time to copy outputs: {time.time() - time_copy:.4f} seconds")
 
-        time_sync = time.time()
-        # Synchronize to ensure all operations are complete
-        stream.synchronize()
-        print(f"Time to synchronize: {time.time() - time_sync:.4f} seconds")
+    time_sync = time.time()
+    # Synchronize to ensure all operations are complete
+    stream.synchronize()
+    print(f"Time to synchronize: {time.time() - time_sync:.4f} seconds")
 
-        time_free = time.time()
-        # Free device memory
-        for mem in device_memory:
-            mem.free()
-        print(f"Time to free device memory: {time.time() - time_free:.4f} seconds")
+    time_free = time.time()
+    # Free device memory
+    for mem in device_memory:
+        mem.free()
+    print(f"Time to free device memory: {time.time() - time_free:.4f} seconds")
 
 
-        return outputs
-    finally:
-        # balance the attach() above, so the context stack is empty on exit
-        # pop the push() above, then balance the attach()
-        #cuda.Context.pop()
-        pass
+    return outputs
+
 
 # Main experiment function
 def run_tensorrt_experiment(image_dir, engine_path,bucket_name = 'giuliaa-optim',s3_key='TRT/model_base.trt', use_s3 = False):
@@ -237,7 +254,7 @@ if __name__ == "__main__":
             "model_good_15_1.trt",
             'giuliaa-optim',
             '/TRT/model_good_15_1.trt',
-            use_s3=False,
+            use_s3=True,
         )
     finally:
         # pop the one context we pushed at import time
