@@ -1,0 +1,244 @@
+import os
+import tensorrt as trt
+import numpy as np
+import time
+import torch
+from pathlib import Path
+import pycuda.driver as cuda
+#import pycuda.autoinit
+import io
+import boto3
+import sys
+
+cuda.init()
+device = cuda.Device(0)
+cuda_driver_context = device.make_context()
+
+
+# Add the parent directory to sys.path so 'src' can be imported
+sys.path.append(str(Path.cwd().parent))
+from src.dataset_utils import get_singleview_data, get_image_transform_latent_model
+import Optim_Utils
+
+# Load TensorRT engine
+def load_engine(engine_path):
+    logger = trt.Logger(trt.Logger.WARNING)
+    with open(engine_path, "rb") as f:
+        runtime = trt.Runtime(logger)
+        return runtime.deserialize_cuda_engine(f.read())
+
+
+
+
+# Modern TensorRT inference function using tensor API
+def run_trt_inference(engine, input_data,stream,context):
+    """
+    Run inference using TensorRT with modern tensor API
+    
+    Args:
+        engine: TensorRT engine
+        input_data: List of input numpy arrays
+        
+    Returns:
+        List of output numpy arrays
+    """
+
+    # ensure our PyCUDA context is current
+    #cuda.Context.attach()
+   
+
+    try:
+        # Get input and output tensor names
+        input_names = []
+        output_names = []
+        
+        time_input_names = time.time()
+        for i in range(engine.num_io_tensors):
+            name = engine.get_tensor_name(i)
+            if engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
+                input_names.append(name)
+            else:
+                output_names.append(name)
+        print(f"Time to get input/output names: {time.time() - time_input_names:.4f} seconds")
+        # Prepare device memory
+        device_memory = []
+        
+        time_handle = time.time()
+        # Handle inputs
+        for i, name in enumerate(input_names):
+            if i >= len(input_data):
+                continue
+                
+            data = input_data[i]
+            
+            # Handle dynamic input shapes
+            if -1 in engine.get_tensor_shape(name):
+                context.set_input_shape(name, data.shape)
+            
+            # Allocate device memory and copy input data
+            mem = cuda.mem_alloc(data.nbytes)
+            cuda.memcpy_htod_async(mem, data, stream)
+            device_memory.append(mem)
+            context.set_tensor_address(name, int(mem))
+        print(f"Time to handle inputs: {time.time() - time_handle:.4f} seconds")
+
+        # Prepare outputs
+        outputs = []
+        output_memory = []
+        
+        time_allocate = time.time()
+        # Allocate output memory
+        for name in output_names:
+            shape = context.get_tensor_shape(name)
+            dtype = trt.nptype(engine.get_tensor_dtype(name))
+            
+            # Allocate device memory for output
+            size = trt.volume(shape) * np.dtype(dtype).itemsize
+            mem = cuda.mem_alloc(size)
+            device_memory.append(mem)
+            output_memory.append(mem)
+            
+            # Set output tensor address
+            context.set_tensor_address(name, int(mem))
+            
+            # Create host output array
+            output = np.empty(shape, dtype=dtype)
+            outputs.append(output)
+        print(f"Time to allocate output memory: {time.time() - time_allocate:.4f} seconds")
+
+        # Run inference
+        time_asyncv3 = time.time()
+        context.execute_async_v3(stream_handle=stream.handle)
+        print(f"Async inference time: {time.time() - time_asyncv3:.4f} seconds")
+
+        time_copy = time.time()
+        # Copy outputs from device to host
+        for i, mem in enumerate(output_memory):
+            cuda.memcpy_dtoh_async(outputs[i], mem, stream)
+        print(f"Time to copy outputs: {time.time() - time_copy:.4f} seconds")
+
+        time_sync = time.time()
+        # Synchronize to ensure all operations are complete
+        stream.synchronize()
+        print(f"Time to synchronize: {time.time() - time_sync:.4f} seconds")
+
+        time_free = time.time()
+        # Free device memory
+        for mem in device_memory:
+            mem.free()
+        print(f"Time to free device memory: {time.time() - time_free:.4f} seconds")
+
+
+        return outputs
+    finally:
+        # balance the attach() above, so the context stack is empty on exit
+        # pop the push() above, then balance the attach()
+        #cuda.Context.pop()
+        pass
+
+# Main experiment function
+def run_tensorrt_experiment(image_dir, engine_path,bucket_name = 'giuliaa-optim',s3_key='TRT/model_base.trt', use_s3 = False):
+    # Load image transform
+    image_transform = get_image_transform_latent_model()
+    
+    if use_s3:
+        # Load TensorRT engine from S3
+        engine = load_engine_from_s3(bucket_name, s3_key)
+    else:
+        # Load TensorRT engine from local path
+        if not os.path.exists(engine_path):
+            raise FileNotFoundError(f"TensorRT engine file {engine_path} does not exist.")
+        engine = load_engine(engine_path)
+    
+    # Results storage
+    results = []
+    image_path = Path(image_dir)
+    save_dir = Path('/home/rayhub-user/Optim-WaLa/examples/Test_Gen')
+    os.makedirs(save_dir, exist_ok=True)
+
+
+    time_contx = time.time()
+    # Create execution context
+    context = engine.create_execution_context()
+    print(f"Time to create execution context: {time.time() - time_contx:.4f} seconds")
+
+    
+    # Process each image
+    for img_file in image_path.iterdir():      
+        time_default = time.time()
+        cuda_driver_context.push()
+
+        print(f"\nProcessing image: {img_file.name}")
+        img_name = img_file.stem
+        
+
+        # Get image data
+        data = get_singleview_data(
+            image_file=img_file,
+            image_transform=image_transform,
+            image_over_white=False,
+            device = 'cpu'
+        )
+        
+
+        # Prepare input data as numpy arrays
+        inputs = [
+            data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
+            data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+            data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
+        ]
+
+        # Create a fresh CUDA stream for this inference
+        stream = cuda.Stream()
+
+        # Run TensorRT inference and measure time
+        start_time = time.time()
+        outputs = run_trt_inference(engine, inputs,stream,context)
+        inference_time = time.time() - start_time
+
+       
+
+
+        print(f"TensorRT inference time: {inference_time:.4f} seconds")
+        
+        # Store result
+        results.append({
+            "image": img_name,
+            "inference_time": inference_time
+        })
+        
+        
+
+        # Now convert to torch on CPU, then move to GPU
+        low_trt_cpu  = torch.from_numpy(outputs[0])
+        high_trt_cpu = torch.from_numpy(outputs[1])
+        low_trt  = low_trt_cpu.to('cuda:0')
+        high_trt = [high_trt_cpu.to('cuda:0')]
+
+
+        obj_path = str(save_dir / f"{img_name}_trt.obj")
+        # Save visualization
+        Optim_Utils.save_visualization_obj(img_name, obj_path, (low_trt, high_trt))
+        print('Total Inference time with Writing', time.time() - time_default)
+        
+        cuda_driver_context.pop()
+
+        
+    # Calculate average inference time
+    avg_time = sum(item["inference_time"] for item in results) / len(results)
+    print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
+    
+    return results
+
+if __name__ == "__main__":
+    try:
+        results = run_tensorrt_experiment(
+            '../examples/single_view/',
+            "model_good_15_1.trt",
+            'giuliaa-optim',
+            '/TRT/model_good_15_1.trt',
+            use_s3=False,
+        )
+    finally:
+        # pop the one context we pushed at import time
+        cuda_driver_context.pop()

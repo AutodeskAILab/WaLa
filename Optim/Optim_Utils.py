@@ -183,14 +183,20 @@ def save_visualization_obj(image_name, obj_path, samples):
 
         dwt_inverse_3d = DWTInverse3d(args_max_depth, args_wavelet,args_padding_mode )
         sdf_recon = dwt_inverse_3d((low, highs))
+
+        marching_time = time.time()
         vertices, triangles = mcubes.marching_cubes(
             sdf_recon.cpu().detach().numpy()[0, 0], 0.0
         )
 
+        print(f"Marching cubes time: {time.time() - marching_time:.4f} seconds")
+
+        # Save the mesh as an OBJ file
+        export_time = time.time()
         vertices = (vertices / args_resolution) * 2.0 - 1.0
         triangles = triangles[:, ::-1]
         mcubes.export_obj(vertices, triangles, obj_path)   
-
+        print(f"Export OBJ time: {time.time() - export_time:.4f} seconds")
 
 class Optim_Visualizations():
     
