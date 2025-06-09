@@ -27,13 +27,8 @@ os.environ["XFORMERS_DISABLED"] = "1"
 
 
 model_name = 'ADSKAILab/WaLa-SV-1B'
-
-output_dir = '../examples/Test_Gen'
-output_format = 'obj'
-target_num_faces = None
 scale = 1.8
-seed = 42
-diffusion_rescale_timestep = 10
+diffusion_rescale_timestep = 5
 
 print(f"Loading model")
 
@@ -44,7 +39,7 @@ model.set_inference_fusion_params(
     )
 
 
-single_image = Path('../examples/single_view/table.png')
+
 
 data_onnx = {
     'images': torch.zeros((1, 3, 224, 224)),  # Dummy tensor
@@ -53,15 +48,13 @@ data_onnx = {
     'id': 'test'
 }
 data_idx = 0
-save_dir = Path(output_dir) 
-base_name = os.path.basename(single_image)
-image_name = os.path.splitext(base_name)[0]  
+
 
 
 torch.onnx.export(
     model,
     (data_onnx, data_idx),
-    "model_10.onnx",
+    "model_5.onnx",
     export_params=True,
     opset_version=19,
     do_constant_folding=True,
@@ -71,6 +64,6 @@ torch.onnx.export(
     dynamo=True)
 
 # Validate the exported model
-onnx_model = onnx.load("model_10.onnx")
-onnx.checker.check_model("model_10.onnx")
+onnx_model = onnx.load("model_5.onnx")
+onnx.checker.check_model("model_5.onnx")
 print("✅ ONNX model exported and validated successfully")

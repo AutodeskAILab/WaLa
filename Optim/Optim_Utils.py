@@ -172,7 +172,7 @@ def benchmark_export(func, vertices, triangles, filename, flip_normals=False):
     end = time.time()
     return end - start
 
-def save_visualization_obj(image_name, obj_path, samples, experiment = None):
+def save_visualization_obj(image_name, obj_path, samples, experiment = None, idx = None):
         """Save a visualization object."""
         low, highs = samples
         
@@ -184,26 +184,38 @@ def save_visualization_obj(image_name, obj_path, samples, experiment = None):
         dwt_inverse_3d = DWTInverse3d(args_max_depth, args_wavelet,args_padding_mode )
         sdf_recon = dwt_inverse_3d((low, highs))
 
-        marching_time = time.time()
+        m_time = time.time()
         vertices, triangles = mcubes.marching_cubes(
             sdf_recon.cpu().detach().numpy()[0, 0], 0.0
         )
-
-        print(f"Marching cubes time: {time.time() - marching_time:.4f} seconds")
+        marching_time = time.time() - m_time
+        print(f"Marching cubes time: {marching_time:.4f} seconds")
 
         # Save the mesh as an OBJ file
-        export_time = time.time()
         vertices = (vertices / args_resolution) * 2.0 - 1.0
         triangles = triangles[:, ::-1]
-        mcubes.export_obj(vertices, triangles, obj_path)   
-        print(f"Export OBJ time: {time.time() - export_time:.4f} seconds")
-        
+
+        e_time = time.time()
+        mcubes.export_obj(vertices, triangles, obj_path)  
+        export_time = time.time() - e_time
+
+        print(f"Export OBJ time: {export_time:.4f} seconds")
+        print("Number of vertices:", len(vertices))
+        print("Number of triangles:", len(triangles))
+
+
         try:
-           experiment.log_metric(
-                "mcubes.marching_cubes time", time.time() - marching_time
+            experiment.log_metric(
+                "mcubes.marching_cubes time", marching_time, step = idx
             )
-           experiment.log_metric(
-                "export obj time", time.time() - export_time
+            experiment.log_metric(
+                "export obj time", export_time, step = idx
+            )
+            experiment.log_metric(
+                "Number of Vertices", len(vertices), step = idx
+            )
+            experiment.log_metric(
+                "Number of Triangles", len(triangles), step = idx
             )
         except:
             pass
@@ -212,7 +224,8 @@ def save_visualization_obj(image_name, obj_path, samples, experiment = None):
 class Optim_Visualizations():
     
     
-    def retrieve_and_plot(experiment,TRT = False, metric_names=None, metric_display_names=None, plotting=True):
+    def retrieve_and_plot(experiment, metric_names=None, metric_display_names=None, plotting=True):
+        
         if metric_names is None:
             metric_names = [
                 "Extract Image",
@@ -225,11 +238,8 @@ class Optim_Visualizations():
                 "export obj time",
                 "Default Delta",
             ]
-        if TRT is True:
-            metric_names = [
-                "Default Delta",
-            ]
 
+   
 
         if metric_display_names is None:
             metric_display_names = {
@@ -246,10 +256,6 @@ class Optim_Visualizations():
             }
 
 
-        if TRT is True:
-            metric_display_names = {
-                "Default Delta": "Total Runtime"
-            }
 
         all_metric_data = {}
 
@@ -281,17 +287,36 @@ class Optim_Visualizations():
 
 
 
-    def get_stats(experiment, metric_names, display=False):
+    def get_stats(
+        experiment, 
+        metric_names, 
+        sum_metric_names=None, 
+        display=False
+    ):
         """
         Retrieve and calculate statistics for each metric in an experiment.
         Returns the metric statistics dictionary and the Default Delta values.
         Optionally prints the statistics if display=True.
+
+        Args:
+            experiment: The experiment object.
+            metric_names (list): List of all metric names to calculate statistics for.
+            sum_metric_names (list, optional): List of metric names to include in the sum (e.g., only timing metrics).
+            display (bool): Whether to print statistics.
         """
         metric_statistics = {}
         total_sum = 0
+
+        # Remove "Default Delta" from metric_names for stats calculation
         metric_names = [name for name in metric_names if name != "Default Delta"]
 
-        
+        # If sum_metric_names not provided, use all metric_names
+        if sum_metric_names is None:
+            sum_metric_names = metric_names
+        else:
+            # Remove "Default Delta" if present
+            sum_metric_names = [name for name in sum_metric_names if name != "Default Delta"]
+
         for metric_name in metric_names:
             # Retrieve metric data
             metric_data = experiment.get_metrics(metric_name)
@@ -307,7 +332,10 @@ class Optim_Visualizations():
                 "sum": np.sum(values)
             }
             metric_statistics[metric_name] = metric_stats
-            total_sum += metric_stats["sum"]
+
+            # Only add to total_sum if in sum_metric_names
+            if metric_name in sum_metric_names:
+                total_sum += metric_stats["sum"]
 
         # Retrieve the "Default Delta" metric
         default_delta_data = experiment.get_metrics("Default Delta")
@@ -321,15 +349,15 @@ class Optim_Visualizations():
                 for stat_name, value in stats.items():
                     print(f"  {stat_name.capitalize()}: {value:.4f}")
 
-            print(f"\nTotal Sum of All Metrics (excluding Default Delta): {total_sum:.4f}")
+            print(f"\nTotal Sum of Selected Metrics: {total_sum:.4f}")
             print(f"Default Delta Sum: {default_delta_sum:.4f}")
 
             # Check if the total sum is close to the Default Delta
             if np.isclose(total_sum, default_delta_sum, atol=20):  # Adjust tolerance as needed
                 percentage_difference = (total_sum / default_delta_sum) * 100
-                print(f"\nThe total sum of all metrics is {percentage_difference:.2f}% of the Default Delta.")
+                print(f"\nThe total sum of selected metrics is {percentage_difference:.2f}% of the Default Delta.")
             else:
-                print("\nThe total sum of all metrics is NOT close to the Default Delta.")
+                print("\nThe total sum of selected metrics is NOT close to the Default Delta.")
 
         return metric_statistics, default_delta_values
 
@@ -337,18 +365,43 @@ class Optim_Visualizations():
 
 
 
-    def plot_metric_pie(metric_statistics, metric_display_names, title='Contribution of Each Metric to Total Sum (%)'):
+    def plot_metric_pie(
+    metric_statistics, 
+    metric_display_names, 
+    sum_metric_names=None, 
+    title='Contribution of Each Metric to Total Sum (%)'
+    ):
+        """
+        Plots a pie chart showing the contribution of each selected metric to the total sum.
+        Only metrics in sum_metric_names are included in the pie chart.
+
+        Args:
+            metric_statistics (dict): Dictionary of metric statistics.
+            metric_display_names (dict): Mapping of metric names to display names.
+            sum_metric_names (list, optional): List of metric names to include in the pie (e.g., only timing metrics).
+            title (str): Title for the plot.
+        """
         plt.rcParams['font.family'] = 'DejaVu Sans'
 
         labels = []
         sizes = []
-        for metric_name, stats in metric_statistics.items():
-            display_name = metric_display_names.get(metric_name, metric_name)
-            labels.append(display_name)
-            sizes.append(stats["sum"])
+
+        # If sum_metric_names is not provided, use all metrics
+        if sum_metric_names is None:
+            sum_metric_names = list(metric_statistics.keys())
+
+        for metric_name in sum_metric_names:
+            if metric_name in metric_statistics:
+                display_name = metric_display_names.get(metric_name, metric_name)
+                labels.append(display_name)
+                sizes.append(metric_statistics[metric_name]["sum"])
 
         # Calculate percentages
         total = sum(sizes)
+        if total == 0:
+            print("Warning: Total sum of selected metrics is zero. Pie chart will not be meaningful.")
+            return
+
         percentages = [size / total * 100 for size in sizes]
 
         # Sort by size (descending)
@@ -399,11 +452,24 @@ class Optim_Visualizations():
         metric_statistics,
         metric_display_names,
         default_delta_values,
+        show_metric_names=None,
         include_min=True,
         include_max=True,
         include_median=True,
         title="Metric Statistics Heatmap"
     ):
+        """
+        Plots a heatmap of selected metric statistics.
+        Args:
+            metric_statistics (dict): Dictionary of metric statistics.
+            metric_display_names (dict): Mapping of metric names to display names.
+            default_delta_values (list): Values for the "Default Delta" metric.
+            show_metric_names (list, optional): List of metric names to include in the heatmap. If None, show all.
+            include_min (bool): Whether to include the min value.
+            include_max (bool): Whether to include the max value.
+            include_median (bool): Whether to include the median value.
+            title (str): Title for the plot.
+        """
         # Prepare columns based on options
         columns = ["Metric", "Mean"]
         if include_median:
@@ -415,16 +481,22 @@ class Optim_Visualizations():
 
         data = {col: [] for col in columns}
 
-        for metric_name, stats in metric_statistics.items():
-            display_name = metric_display_names.get(metric_name, metric_name)
-            data["Metric"].append(display_name)
-            data["Mean"].append(stats["mean"])
-            if include_median:
-                data["Median"].append(stats["median"])
-            if include_min:
-                data["Min"].append(stats["min"])
-            if include_max:
-                data["Max"].append(stats["max"])
+        # If show_metric_names is None, use all metrics
+        if show_metric_names is None:
+            show_metric_names = list(metric_statistics.keys())
+
+        for metric_name in show_metric_names:
+            if metric_name in metric_statistics:
+                stats = metric_statistics[metric_name]
+                display_name = metric_display_names.get(metric_name, metric_name)
+                data["Metric"].append(display_name)
+                data["Mean"].append(stats["mean"])
+                if include_median:
+                    data["Median"].append(stats["median"])
+                if include_min:
+                    data["Min"].append(stats["min"])
+                if include_max:
+                    data["Max"].append(stats["max"])
 
         # Add Default Delta statistics as "Total Runtime"
         default_delta_stats = {
