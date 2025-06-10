@@ -10,6 +10,59 @@ from src.diffusion_modules.dwt import DWTInverse3d
 import mcubes
 import time
 import torch
+import boto3
+
+def download_s3_folder(bucket_name, s3_prefix, local_dir):
+    """
+    Download all files under a given S3 prefix to a local directory, preserving structure.
+    Eg. download_s3_folder("giuliaa-optim", "/TRT/Google_Dataset_Outputs/10.1/", "/TRT_OBJ/10.1")
+    Args:
+        bucket_name (str): Name of the S3 bucket.
+        s3_prefix (str): Prefix (folder path) in the S3 bucket.
+        local_dir (str or Path): Local directory to download files into.
+    """
+    s3 = boto3.client('s3')
+    paginator = s3.get_paginator('list_objects_v2')
+    local_dir = Path(local_dir)
+    local_dir.mkdir(parents=True, exist_ok=True)
+
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=s3_prefix):
+        for obj in page.get('Contents', []):
+            key = obj['Key']
+            # Skip "folders"
+            if key.endswith('/'):
+                continue
+            # Compute local file path
+            rel_path = os.path.relpath(key, s3_prefix)
+            local_path = local_dir / rel_path
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            print(f"Downloading {key} to {local_path}")
+            with open(local_path, 'wb') as f:
+                s3.download_fileobj(bucket_name, key, f)
+
+
+
+
+def upload_files_to_s3(file_paths, bucket_name, s3_prefix=""):
+    """
+    Uploads a list of files to an S3 bucket.
+    # Example usage:
+    #files = ["model_10.onnx.data", "model_10.onnx"]
+    #upload_files_to_s3(files, "giuliaa-optim", s3_prefix="/ONNX/Steps_10")
+
+    Args:
+        file_paths (list): List of file paths (str or Path) to upload.
+        bucket_name (str): Name of the S3 bucket.
+        s3_prefix (str): Optional prefix (folder) in the bucket.
+    """
+    s3 = boto3.client('s3')
+    for file_path in file_paths:
+        file_path = Path(file_path)
+        s3_key = f"{s3_prefix}/{file_path.name}" if s3_prefix else file_path.name
+        with open(file_path, "rb") as f:
+            s3.upload_fileobj(f, bucket_name, s3_key)
+        print(f"Uploaded {file_path} to s3://{bucket_name}/{s3_key}")
+
 
 def find_and_move_matching_files(source_folder, check_folder, destination_folder, TRT=False):
     """
@@ -306,19 +359,23 @@ class Optim_Visualizations():
         """
         metric_statistics = {}
         total_sum = 0
+        do_sum = (sum_metric_names is not None)
 
         # Remove "Default Delta" from metric_names for stats calculation
         metric_names = [name for name in metric_names if name != "Default Delta"]
 
-        # If sum_metric_names not provided, use all metric_names
-        if sum_metric_names is None:
-            sum_metric_names = metric_names
+        if do_sum:
+            sum_metric_names = [n for n in sum_metric_names if n != "Default Delta"]
         else:
-            # Remove "Default Delta" if present
-            sum_metric_names = [name for name in sum_metric_names if name != "Default Delta"]
+            # disable summing
+            sum_metric_names = []
 
         for metric_name in metric_names:
             # Retrieve metric data
+            metric_data = experiment.get_metrics(metric_name)
+            # if there’s no data for this metric, skip it
+            if not metric_data:
+                continue            # Retrieve metric data
             metric_data = experiment.get_metrics(metric_name)
             # Extract values and convert to float
             values = [float(point["metricValue"]) for point in metric_data]
@@ -333,8 +390,8 @@ class Optim_Visualizations():
             }
             metric_statistics[metric_name] = metric_stats
 
-            # Only add to total_sum if in sum_metric_names
-            if metric_name in sum_metric_names:
+            # Only add to total_sum if summing is enabled
+            if do_sum and metric_name in sum_metric_names:
                 total_sum += metric_stats["sum"]
 
         # Retrieve the "Default Delta" metric
@@ -344,20 +401,22 @@ class Optim_Visualizations():
 
         if display:
             print("Metric Statistics:")
-            for metric_name, stats in metric_statistics.items():
-                print(f"\n{metric_name}:")
-                for stat_name, value in stats.items():
-                    print(f"  {stat_name.capitalize()}: {value:.4f}")
+            for m, stats in metric_statistics.items():
+                print(f"\n{m}: mean={stats['mean']:.4f}, "
+                      f"median={stats['median']:.4f}, "
+                      f"min={stats['min']:.4f}, "
+                      f"max={stats['max']:.4f}, "
+                      f"sum={stats['sum']:.4f}")
 
-            print(f"\nTotal Sum of Selected Metrics: {total_sum:.4f}")
-            print(f"Default Delta Sum: {default_delta_sum:.4f}")
-
-            # Check if the total sum is close to the Default Delta
-            if np.isclose(total_sum, default_delta_sum, atol=20):  # Adjust tolerance as needed
-                percentage_difference = (total_sum / default_delta_sum) * 100
-                print(f"\nThe total sum of selected metrics is {percentage_difference:.2f}% of the Default Delta.")
-            else:
-                print("\nThe total sum of selected metrics is NOT close to the Default Delta.")
+            # only show the aggregate if we actually summed
+            if do_sum:
+                print(f"\nTotal Sum of Selected Metrics: {total_sum:.4f}")
+                print(f"Default Delta Sum: {default_delta_sum:.4f}")
+                if np.isclose(total_sum, default_delta_sum, atol=20):
+                    pct = (total_sum / default_delta_sum) * 100
+                    print(f"The total sum is {pct:.2f}% of Default Delta.")
+                else:
+                    print("The total sum is NOT close to Default Delta.")
 
         return metric_statistics, default_delta_values
 
