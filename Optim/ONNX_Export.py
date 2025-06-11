@@ -28,7 +28,7 @@ os.environ["XFORMERS_DISABLED"] = "1"
 
 model_name = 'ADSKAILab/WaLa-SV-1B'
 scale = 1.8
-diffusion_rescale_timestep = 5
+diffusion_rescale_timestep = 100
 
 print(f"Loading model")
 
@@ -54,7 +54,7 @@ data_idx = 0
 torch.onnx.export(
     model,
     (data_onnx, data_idx),
-    "model_5.onnx",
+    "model_100.onnx",
     export_params=True,
     opset_version=19,
     do_constant_folding=True,
@@ -64,6 +64,6 @@ torch.onnx.export(
     dynamo=True)
 
 # Validate the exported model
-onnx_model = onnx.load("model_5.onnx")
-onnx.checker.check_model("model_5.onnx")
+onnx_model = onnx.load("model_100.onnx")
+onnx.checker.check_model("model_100.onnx")
 print("✅ ONNX model exported and validated successfully")

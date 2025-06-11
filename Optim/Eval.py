@@ -21,6 +21,23 @@ def normalize_mesh(mesh):
     m.apply_scale(scale)
     return m
 
+def scale_to_unit_cube(mesh, scale_ratio=1.0):
+    """
+    Returns a copy of the given mesh scaled to a unit cube.
+    Arguments:
+        mesh:        A trimesh.Trimesh.
+        scale_ratio: A scaling factor.
+    Returns:
+        A trimesh.Trimesh.
+    """
+    if isinstance(mesh, trimesh.Scene):
+        mesh = mesh.dump().sum()
+
+    vertices = mesh.vertices - mesh.bounding_box.centroid
+    vertices *= 2 / np.max(mesh.bounding_box.extents)
+    vertices *= scale_ratio
+
+    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 def sync_s3_folder_to_local(bucket, s3_prefix, local_dir):
     """
@@ -151,8 +168,8 @@ def compare_local_obj_folders(
             mesh_a = rotate_y(mesh_a, -45)
 
             ## Normalize the mesh
-            #mesh_a = normalize_mesh(mesh_a)
-            #mesh_b = normalize_mesh(mesh_b)
+            mesh_a = scale_to_unit_cube(mesh_a, scale_ratio=0.9)
+            mesh_b = scale_to_unit_cube(mesh_b, scale_ratio= 0.9)
             # compute SDFs
             sdf_a = mesh_to_sdf(mesh_a, grid_size)
             sdf_b = mesh_to_sdf(mesh_b, grid_size)
