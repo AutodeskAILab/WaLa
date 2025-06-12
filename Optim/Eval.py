@@ -165,7 +165,7 @@ def compare_local_obj_folders(
             mesh_b = trimesh.load(fB, force='mesh')
             # rotate the Google mesh:
             mesh_a = rotate_x(mesh_a, -90)
-            mesh_a = rotate_y(mesh_a, -45)
+            #mesh_a = rotate_y(mesh_a, -45)
 
             ## Normalize the mesh
             mesh_a = scale_to_unit_cube(mesh_a, scale_ratio=0.9)
@@ -193,9 +193,9 @@ def compare_local_obj_folders(
 
 avg_iou = compare_local_obj_folders(
     "/Google_Dataset_Objects/",
-    "/Original_Model_Objects/",
+    "/TRT_C_OBJ/",
     suffix_a=".obj",
-    suffix_b=".obj",
+    suffix_b="_trt.obj",
     verbose=True,
     grid_size=128)
 print("Average IoU (local):", avg_iou)

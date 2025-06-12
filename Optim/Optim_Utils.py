@@ -42,6 +42,25 @@ def download_s3_folder(bucket_name, s3_prefix, local_dir):
 
 
 
+def upload_folder_to_s3(folder_path, bucket_name, s3_prefix=""):
+    """
+    Uploads all files in a folder (recursively) to an S3 bucket, preserving folder structure.
+
+    Args:
+        folder_path (str or Path): Path to the folder to upload.
+        bucket_name (str): Name of the S3 bucket.
+        s3_prefix (str): Optional prefix (folder) in the bucket.
+    """
+    s3 = boto3.client('s3')
+    folder_path = Path(folder_path)
+    for file_path in folder_path.rglob('*'):
+        if file_path.is_file():
+            # Compute S3 key to preserve folder structure
+            relative_path = file_path.relative_to(folder_path)
+            s3_key = f"{s3_prefix}/{relative_path}".lstrip('/') if s3_prefix else str(relative_path)
+            with open(file_path, "rb") as f:
+                s3.upload_fileobj(f, bucket_name, s3_key)
+            print(f"Uploaded {file_path} to s3://{bucket_name}/{s3_key}")
 
 def upload_files_to_s3(file_paths, bucket_name, s3_prefix=""):
     """

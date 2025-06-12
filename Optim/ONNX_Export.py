@@ -28,12 +28,22 @@ os.environ["XFORMERS_DISABLED"] = "1"
 
 model_name = 'ADSKAILab/WaLa-SV-1B'
 scale = 1.8
-diffusion_rescale_timestep = 100
+diffusion_rescale_timestep = 5
+
+MODEL_CONFIG_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_single_image_udit_1152_32_16/args.json"
+MODEL_CHECKPOINT_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_single_image_udit_1152_32_16/checkpoints/step=step=3250000.ckpt"
+
 
 print(f"Loading model")
 
 
-model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
+#model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
+model = Model.from_pretrained(
+    model_config_uri=MODEL_CONFIG_URI,
+    model_checkpoint_uri=MODEL_CHECKPOINT_URI
+)
+
+
 model.set_inference_fusion_params(
         scale, diffusion_rescale_timestep
     )
