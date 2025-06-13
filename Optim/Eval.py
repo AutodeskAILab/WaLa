@@ -11,7 +11,7 @@ import shutil
 import mesh2sdf_fix 
 from lfd import LightFieldDistance
 import numpy as np
-
+import math
 
 
 def sync_s3_folder_to_local(bucket, s3_prefix, local_dir):
@@ -218,7 +218,7 @@ def compare_local_obj_folders(
         if experiment is not None:
             try:
                 experiment.log_metric("iou_value", iou, step=idx)
-                experiment.log_metric("iou_pair_name", f"{map_a[base]} vs {map_b[base]}", step=idx)
+                experiment.log_parameter("iou_pair_name", f"{map_a[base]} vs {map_b[base]}", step=idx)
             except Exception as e:
                 if verbose:
                     print(f"Comet logging failed for pair {map_a[base]} vs {map_b[base]}: {e}")
@@ -288,7 +288,7 @@ def compare_local_obj_folders_lfd(
         if experiment is not None:
             try:
                 experiment.log_metric("lfd_distance", dist, step=idx)
-                experiment.log_metric("lfd_pair_name", f"{map_a[base]} vs {map_b[base]}", step=idx)
+                experiment.log_parameter("lfd_pair_name", f"{map_a[base]} vs {map_b[base]}", step=idx)
             except Exception as e:
                 if verbose:
                     print(f"Comet logging failed for pair {map_a[base]} vs {map_b[base]}: {e}")
