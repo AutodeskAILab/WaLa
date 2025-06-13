@@ -392,7 +392,7 @@ if __name__ == "__main__":
 
 ################################################################################
 # Usage shortcut:
-# xvfb-run /home/rayhub-user/.conda/envs/wala/bin/python /home/rayhub-user/Optim-WaLa/Optim/Eval.py  --metric lfd --verbose --comet --no-rotate
+# xvfb-run python /home/ray/Optim-WaLa/Optim/Eval.py   --metric lfd   --folder_a ~/Google_Dataset_Objects   --folder_b ~/Original_Model_Objects   --s3_bucket_a giuliaa-optim   --s3_prefix_a /TRT/Google_Dataset_Outputs/15.1/   --s3_bucket_b giuliaa-optim   --s3_prefix_b /Original_Model_Objects/   --suffix_a _trt.obj   --verbose   --no-rotate   --comet
 # Note needs Edward better fork https://github.com/edward1997104/light-field-distance
 # s3://giuliaa-optim//TRT/Google_Dataset_Outputs/15.1/
-# s3://giuliaa-optim/
+# Setup Hook sudo apt update && \ sudo apt install -y xvfb libglu1 freeglut3 xvfb
