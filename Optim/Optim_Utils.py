@@ -40,7 +40,18 @@ def download_s3_folder(bucket_name, s3_prefix, local_dir):
             with open(local_path, 'wb') as f:
                 s3.download_fileobj(bucket_name, key, f)
 
-
+def download_s3_file(bucket_name, s3_key, local_path):
+    """
+    Download a single file from S3 to a local path.
+    Args:
+        bucket_name (str): Name of the S3 bucket.
+        s3_key (str): Key (path) of the file in S3.
+        local_path (str or Path): Local file path to save.
+    """
+    s3 = boto3.client('s3')
+    local_path = str(local_path)
+    with open(local_path, 'wb') as f:
+        s3.download_fileobj(bucket_name, s3_key, f)
 
 def upload_folder_to_s3(folder_path, bucket_name, s3_prefix=""):
     """

@@ -154,7 +154,7 @@ def run_trt_inference(engine, input_data,stream,context):
 
 
 # Main experiment function
-def run_tensorrt_experiment(image_dir, engine_path,bucket_name = 'giuliaa-optim',s3_key='TRT/model_base.trt', use_s3 = False):
+def run_tensorrt_experiment(image_dir,save_dir, engine_path,bucket_name = 'giuliaa-optim',s3_key='TRT/model_base.trt', use_s3 = False):
     # Load image transform
     image_transform = get_image_transform_latent_model()
     
@@ -170,7 +170,7 @@ def run_tensorrt_experiment(image_dir, engine_path,bucket_name = 'giuliaa-optim'
     # Results storage
     results = []
     image_path = Path(image_dir)
-    save_dir = Path('/home/rayhub-user/Optim-WaLa/examples/Test_Gen')
+    save_dir = Path(save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
 
@@ -250,8 +250,9 @@ def run_tensorrt_experiment(image_dir, engine_path,bucket_name = 'giuliaa-optim'
 if __name__ == "__main__":
     try:
         results = run_tensorrt_experiment(
-            '../examples/single_view/',
-            "model_10.1.trt",
+            '/GSO_Renders_SV_Dataset',
+            '/GSO_Internal_Optimized_Objects',
+            "model_5.1.trt",
             'giuliaa-optim',
             '/TRT/model_good_15_1.trt',
             use_s3=False,
