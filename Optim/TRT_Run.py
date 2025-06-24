@@ -251,10 +251,10 @@ if __name__ == "__main__":
     try:
         results = run_tensorrt_experiment(
             '/GSO_Renders_SV_Dataset',
-            '/GSO_Internal_Optimized_Objects',
+            '/GSO_Internal_Optimized_Objects_5.1---2',
             "model_5.1.trt",
             'giuliaa-optim',
-            '/TRT/model_good_15_1.trt',
+            '/TRT/model_5.1.trt',
             use_s3=False,
         )
     finally:
