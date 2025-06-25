@@ -37,12 +37,12 @@ MODEL_CHECKPOINT_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_
 
 
 #### Multi_View Depth
-MODEL_CONFIG_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_6_depth_udit_1152_32_16/args.json"
-MODEL_CHECKPOINT_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_6_depth_udit_1152_32_16/checkpoints/step=step=2400000.ckpt"
+MODEL_CONFIG_URI_MV_depth = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_6_depth_udit_1152_32_16/args.json"
+MODEL_CHECKPOINT_URI_MV_depth = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_6_depth_udit_1152_32_16/checkpoints/step=step=2400000.ckpt"
 
 #### Multi_View RGB 
-MODEL_CONFIG_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_multiview_udit_1152_32_16/args.json"
-MODEL_CHECKPOINT_URI = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_multiview_udit_1152_32_16/checkpoints/step=step=2840000.ckpt"
+MODEL_CONFIG_URI_MV_RGB = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_multiview_udit_1152_32_16/args.json"
+MODEL_CHECKPOINT_URI_MV_RGB = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_multiview_udit_1152_32_16/checkpoints/step=step=2840000.ckpt"
 
 print(f"Loading model")
 
@@ -59,7 +59,7 @@ model.set_inference_fusion_params(
 
 
 data_onnx = {
-    'images': torch.zeros((1, 4, 3, 224, 224)),  # Dummy tensor
+    'images': torch.zeros((1, 3, 224, 224)),  # Dummy tensor, for multiview add extra dimension after 1, example 4 image view (1,4,3,224,224)
     'img_idx': torch.tensor([0], device='cuda:0'),
     'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),  # Dummy tensor
     'id': 'dummy'
