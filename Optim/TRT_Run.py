@@ -17,7 +17,7 @@ cuda_driver_context = device.make_context()
 
 # Add the parent directory to sys.path so 'src' can be imported
 sys.path.append(str(Path.cwd().parent))
-from src.dataset_utils import get_singleview_data, get_image_transform_latent_model
+from src.dataset_utils import get_singleview_data,get_multiview_data, get_image_transform_latent_model
 import Optim_Utils
 
 # Load TensorRT engine
@@ -154,50 +154,63 @@ def run_trt_inference(engine, input_data,stream,context):
 
 
 # Main experiment function
-def run_tensorrt_experiment(image_dir,save_dir, engine_path,bucket_name = 'giuliaa-optim',s3_key='TRT/model_base.trt', use_s3 = False):
-    # Load image transform
+
+def run_tensorrt_experiment(
+    image_dir, save_dir, engine_path, bucket_name='giuliaa-optim', s3_key='TRT/model_base.trt', use_s3=False, multiview=False
+):
     image_transform = get_image_transform_latent_model()
-    
     if use_s3:
-        # Load TensorRT engine from S3
         engine = load_engine_from_s3(bucket_name, s3_key)
     else:
-        # Load TensorRT engine from local path
         if not os.path.exists(engine_path):
             raise FileNotFoundError(f"TensorRT engine file {engine_path} does not exist.")
         engine = load_engine(engine_path)
-    
-    # Results storage
+
     results = []
     image_path = Path(image_dir)
     save_dir = Path(save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
-
     time_contx = time.time()
-    # Create execution context
     context = engine.create_execution_context()
     print(f"Time to create execution context: {time.time() - time_contx:.4f} seconds")
 
-    
-    # Process each image
-    for img_file in image_path.iterdir():      
+    # --- Main loop ---
+    for obj in image_path.iterdir():
         time_default = time.time()
         cuda_driver_context.push()
 
-        print(f"\nProcessing image: {img_file.name}")
-        img_name = img_file.stem
-        
-
-        # Get image data
-        data = get_singleview_data(
-            image_file=img_file,
-            image_transform=image_transform,
-            image_over_white=False,
-            device = 'cpu'
-        )
-        
-
+        if multiview:
+            if not obj.is_dir():
+                cuda_driver_context.pop()
+                continue
+            # Multiview: load all images in the 'img' subfolder
+            img_dir = obj / "img"
+            img_files = sorted(list(img_dir.glob("*.png")))[:6]  # or "*.jpg"
+            if not img_files:
+                print(f"No images found in {img_dir}")
+                cuda_driver_context.pop()
+                continue
+            image_views = [int(Path(f).stem) for f in img_files]
+            data = get_multiview_data(
+                image_files=img_files,
+                views=image_views,
+                image_transform=image_transform,
+                device='cpu'
+            )
+            img_name = obj.name
+        else:
+            # Single view: treat each file as one object
+            if not obj.is_file():
+                cuda_driver_context.pop()
+                continue
+            data = get_singleview_data(
+                image_file=obj,
+                image_transform=image_transform,
+                image_over_white=False,
+                device='cpu'
+            )
+            img_name = obj.stem
         # Prepare input data as numpy arrays
         inputs = [
             data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
@@ -205,57 +218,41 @@ def run_tensorrt_experiment(image_dir,save_dir, engine_path,bucket_name = 'giuli
             data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
         ]
 
-        # Create a fresh CUDA stream for this inference
         stream = cuda.Stream()
-
-        # Run TensorRT inference and measure time
         start_time = time.time()
-        outputs = run_trt_inference(engine, inputs,stream,context)
+        outputs = run_trt_inference(engine, inputs, stream, context)
         inference_time = time.time() - start_time
 
-       
-
-
         print(f"TensorRT inference time: {inference_time:.4f} seconds")
-        
-        # Store result
-        results.append({
-            "image": img_name,
-            "inference_time": inference_time
-        })
-        
-        
+        results.append({"image": img_name, "inference_time": inference_time})
 
-        # Now convert to torch on CPU, then move to GPU
-        low_trt_cpu  = torch.from_numpy(outputs[0])
+        low_trt_cpu = torch.from_numpy(outputs[0])
         high_trt_cpu = torch.from_numpy(outputs[1])
-        low_trt  = low_trt_cpu.to('cuda:0')
+        low_trt = low_trt_cpu.to('cuda:0')
         high_trt = [high_trt_cpu.to('cuda:0')]
 
-
         obj_path = str(save_dir / f"{img_name}_trt.obj")
-        # Save visualization
         Optim_Utils.save_visualization_obj(img_name, obj_path, (low_trt, high_trt))
         print('Total Inference time with Writing', time.time() - time_default)
-        
+
         cuda_driver_context.pop()
 
-        
-    # Calculate average inference time
     avg_time = sum(item["inference_time"] for item in results) / len(results)
     print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
-    
     return results
+
 
 if __name__ == "__main__":
     try:
+        # Set multiview=True to enable multiview functionality
         results = run_tensorrt_experiment(
-            '/GSO_Renders_SV_Dataset',
-            '/GSO_Internal_Optimized_Objects_5.1---2',
-            "model_5.1.trt",
+            '/GSO_Renders',
+            '/GSO_Multiview_Objects_6-5.1',
+            "model_MV_6-5.1.trt",
             'giuliaa-optim',
-            '/TRT/model_5.1.trt',
+            '/TRT/model_MV_6-5.1.trt',
             use_s3=False,
+            multiview=True  # <-- Enable multiview support
         )
     finally:
         # pop the one context we pushed at import time
