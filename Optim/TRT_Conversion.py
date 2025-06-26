@@ -9,12 +9,12 @@ import os
 
 # --- CONFIGURATION ---
 bucket_name = 'giuliaa-optim'
-onnx_s3_key = '/ONNX/model_voxel_16.onnx'
-onnx_data_s3_key = '/ONNX/model_voxel_16.onnx.data'
-local_onnx = 'model_voxel_16.onnx'
-local_data = 'model_voxel_16.onnx.data'
-trt_engine_path = "model_voxel_16-5.1.trt"
-trt_s3_key = '/TRT/model_voxel_16-5.1.trt'
+onnx_s3_key = '/ONNX/model_pointcloud.onnx'
+onnx_data_s3_key = '/ONNX/model_pointcloud.onnx.data'
+local_onnx = 'model_pointcloud.onnx'
+local_data = 'model_pointcloud.onnx.data'
+trt_engine_path = "model_pointcloud.trt"
+trt_s3_key = '/TRT/model_pointcloud.trt'
 UPLOAD_TO_S3 = True  # <-- Set to True to upload, False to skip
 
 
