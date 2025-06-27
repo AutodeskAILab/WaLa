@@ -997,7 +997,7 @@ class Trainer_Condition_Network(pl.LightningModule):
             t0 = time.time()
 
             condition_features = self.extract_input_features(
-                data, data_type="image", is_train=False, to_cuda=True
+                data, data_type="Pointcloud", is_train=False, to_cuda=True
             )
             
             img_idx = self.extract_img_idx(data, data_idx=data_idx)
@@ -1005,11 +1005,11 @@ class Trainer_Condition_Network(pl.LightningModule):
             t1 = time.time()
             print('Extract Image', t1 - t0, 's')
 
+            
             latent = self.network.inference(
                 condition_features.size(0),
                 condition_features,
-                scale=self.args.scale,
-                image_index=img_idx,
+                None,
             )
             t2 = time.time()
             print("Latent Diffusion Time", t2-t1,'s')

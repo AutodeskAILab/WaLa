@@ -45,9 +45,25 @@ def load_latent_model(
     with open(json_path, "r") as file:
         args = json.load(file, object_hook=DotDict)
 
+    # Load checkpoint manually to patch state_dict if needed
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    state_dict = checkpoint["state_dict"]
+
+    # Patch: Remove _orig_mod. prefix if present (from torch.compile)
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        if k.startswith("autoencoder._orig_mod."):
+            new_state_dict[k.replace("autoencoder._orig_mod.", "autoencoder.")] = v
+        else:
+            new_state_dict[k] = v
+    checkpoint["state_dict"] = new_state_dict
+
+    # Now load the model using the patched checkpoint
     model = Trainer_Condition_Network.load_from_checkpoint(
-        checkpoint_path=checkpoint_path, map_location="cpu", args=args
+        checkpoint_path=checkpoint_path, map_location="cpu", args=args, strict=False
     )
+    # Overwrite model state_dict with patched one (to ensure correct keys)
+    model.load_state_dict(new_state_dict, strict=False)
 
     if hasattr(model, "ema_state_dict") and model.ema_state_dict is not None:
         # load EMA weights
@@ -71,8 +87,7 @@ def load_latent_model(
 
     return model
 
-
-class Model_old:
+class Model:
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: str):
@@ -105,7 +120,7 @@ class Model_old:
 import boto3
 from urllib.parse import urlparse
 
-class Model:
+class Model_internal:
     @classmethod
     def from_pretrained(
         cls,
