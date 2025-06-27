@@ -119,7 +119,6 @@ if pointcloud:
     data_idx = 0
 
 
-
 torch.onnx.export(
     model,
     (data_onnx, data_idx),
