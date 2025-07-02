@@ -200,6 +200,7 @@ class Cross_DiTBlock(nn.Module):
             num_heads=num_heads,
             qkv_bias=True,
             qk_norm=True,
+            norm_layer=nn.LayerNorm,
             **block_kwargs,
         )
         self.norm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
@@ -220,6 +221,7 @@ class Cross_DiTBlock(nn.Module):
             num_heads=num_heads,
             qkv_bias=True,
             qk_norm=True,
+            norm_layer=nn.LayerNorm,
             **block_kwargs,
         )
 
@@ -246,6 +248,7 @@ class DiTBlock_Basic(nn.Module):
             num_heads=num_heads,
             qkv_bias=True,
             qk_norm=True,
+            norm_layer=nn.LayerNorm,
             **block_kwargs,
         )
         self.norm2 = nn.LayerNorm(hidden_size, elementwise_affine=True, eps=1e-6)
@@ -277,6 +280,7 @@ class DiTBlock(nn.Module):
             num_heads=num_heads,
             qkv_bias=True,
             qk_norm=True,
+            norm_layer=nn.LayerNorm,
             **block_kwargs,
         )
         self.norm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
