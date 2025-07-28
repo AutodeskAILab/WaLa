@@ -9,6 +9,7 @@ import pycuda.driver as cuda
 import io
 import boto3
 import sys
+import argparse
 
 cuda.init()
 device = cuda.Device(0)
@@ -156,18 +157,18 @@ def run_trt_inference(engine, input_data,stream,context):
 # Main experiment function
 
 def run_tensorrt_experiment(
-    image_dir, save_dir, engine_path, bucket_name='giuliaa-optim', s3_key='TRT/model_base.trt', use_s3=False, multiview=False
+    input_dir, save_dir, engine_path, modality="singleview", use_s3=False, multiview=False
 ):
     image_transform = get_image_transform_latent_model()
     if use_s3:
-        engine = load_engine_from_s3(bucket_name, s3_key)
+        raise NotImplementedError("S3 loading is disabled in this version.")
     else:
         if not os.path.exists(engine_path):
             raise FileNotFoundError(f"TensorRT engine file {engine_path} does not exist.")
         engine = load_engine(engine_path)
 
     results = []
-    image_path = Path(image_dir)
+    input_path = Path(input_dir)
     save_dir = Path(save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -176,17 +177,16 @@ def run_tensorrt_experiment(
     print(f"Time to create execution context: {time.time() - time_contx:.4f} seconds")
 
     # --- Main loop ---
-    for obj in image_path.iterdir():
+    for obj in input_path.iterdir():
         time_default = time.time()
         cuda_driver_context.push()
 
-        if multiview:
+        if modality == "multiview":
             if not obj.is_dir():
                 cuda_driver_context.pop()
                 continue
-            # Multiview: load all images in the 'img' subfolder
             img_dir = obj / "img"
-            img_files = sorted(list(img_dir.glob("*.png")))[:6]  # or "*.jpg"
+            img_files = sorted(list(img_dir.glob("*.png")))[:6]
             if not img_files:
                 print(f"No images found in {img_dir}")
                 cuda_driver_context.pop()
@@ -198,9 +198,48 @@ def run_tensorrt_experiment(
                 image_transform=image_transform,
                 device='cpu'
             )
-            img_name = obj.name
-        else:
-            # Single view: treat each file as one object
+            obj_name = obj.name
+
+            inputs = [
+                data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
+                data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+                data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
+            ]
+        elif modality == "pointcloud":
+            if not obj.is_file():
+                cuda_driver_context.pop()
+                continue
+            # Assume obj is a .npy file containing pointcloud data
+            pointcloud = np.load(obj)
+            data = {
+                "Pointcloud": pointcloud[np.newaxis, ...],  # Add batch dim
+                "low": np.zeros((1, 1, 46, 46, 46), dtype=np.float32),
+                "id": "dummy"
+            }
+            obj_name = obj.stem
+            inputs = [
+                data["Pointcloud"],
+                data["low"],
+                np.array([0], dtype=np.int64)
+            ]
+        elif modality == "voxels":
+            if not obj.is_file():
+                cuda_driver_context.pop()
+                continue
+            # Assume obj is a .npy file containing voxel data
+            voxels = np.load(obj)
+            data = {
+                "voxels": voxels[np.newaxis, ...],  # Add batch dim
+                "low": np.zeros((1, 1, 46, 46, 46), dtype=np.float32),
+                "id": "dummy"
+            }
+            obj_name = obj.stem
+            inputs = [
+                data["voxels"],
+                data["low"],
+                np.array([0], dtype=np.int64)
+            ]
+        else:  # singleview/sketch
             if not obj.is_file():
                 cuda_driver_context.pop()
                 continue
@@ -210,13 +249,12 @@ def run_tensorrt_experiment(
                 image_over_white=False,
                 device='cpu'
             )
-            img_name = obj.stem
-        # Prepare input data as numpy arrays
-        inputs = [
-            data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
-            data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
-            data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
-        ]
+            obj_name = obj.stem
+            inputs = [
+                data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
+                data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+                data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
+            ]
 
         stream = cuda.Stream()
         start_time = time.time()
@@ -224,36 +262,47 @@ def run_tensorrt_experiment(
         inference_time = time.time() - start_time
 
         print(f"TensorRT inference time: {inference_time:.4f} seconds")
-        results.append({"image": img_name, "inference_time": inference_time})
+        results.append({"object": obj_name, "inference_time": inference_time})
 
         low_trt_cpu = torch.from_numpy(outputs[0])
         high_trt_cpu = torch.from_numpy(outputs[1])
         low_trt = low_trt_cpu.to('cuda:0')
         high_trt = [high_trt_cpu.to('cuda:0')]
 
-        obj_path = str(save_dir / f"{img_name}_trt.obj")
-        Optim_Utils.save_visualization_obj(img_name, obj_path, (low_trt, high_trt))
+        obj_path = str(save_dir / f"{obj_name}_trt.obj")
+        Optim_Utils.save_visualization_obj(obj_name, obj_path, (low_trt, high_trt))
         print('Total Inference time with Writing', time.time() - time_default)
 
         cuda_driver_context.pop()
 
-    avg_time = sum(item["inference_time"] for item in results) / len(results)
+    avg_time = sum(item["inference_time"] for item in results) / len(results) if results else 0
     print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
     return results
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run inference with TensorRT engine.")
+    parser.add_argument("--input_dir", type=str, required=True, help="Input directory containing data")
+    parser.add_argument("--save_dir", type=str, required=True, help="Directory to save output objects")
+    parser.add_argument("--engine_path", type=str, required=True, help="Path to TensorRT engine file")
+    parser.add_argument("--modality", type=str, choices=["singleview", "multiview", "pointcloud", "voxels"], required=True, help="Modality type")
+    args = parser.parse_args()
+
     try:
-        # Set multiview=True to enable multiview functionality
         results = run_tensorrt_experiment(
-            '/GSO_Renders',
-            '/GSO_Multiview_Objects_6-5.1',
-            "model_MV_6-5.1.trt",
-            'giuliaa-optim',
-            '/TRT/model_MV_6-5.1.trt',
-            use_s3=False,
-            multiview=True  # <-- Enable multiview support
+            args.input_dir,
+            args.save_dir,
+            args.engine_path,
+            modality=args.modality,
+            multiview=(args.modality == "multiview")
         )
     finally:
-        # pop the one context we pushed at import time
         cuda_driver_context.pop()
+
+
+
+# Example usages:
+# python Optim/TRT_Run.py --input_dir input_images --save_dir output_objs --engine_path model_singleview.trt --modality singleview
+# python Optim/TRT_Run.py --input_dir input_multiview --save_dir output_objs --engine_path model_multiview.trt --modality multiview
+# python Optim/TRT_Run.py --input_dir input_pointclouds --save_dir output_objs --engine_path model_pointcloud.trt --modality pointcloud
+# python Optim/TRT_Run.py --input_dir input_voxels --save_dir output_objs --engine_path model_voxels.trt --modality voxels

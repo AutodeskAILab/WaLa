@@ -6,7 +6,7 @@ import sys
 sys.path.append(str(Path.cwd().parent))
 
 from pytorch_lightning import seed_everything
-from src.model_utils import Model, Model_internal
+from src.model_utils import Model
 from src.mvdream_utils import load_mvdream_model
 import argparse
 from PIL import Image
@@ -21,128 +21,123 @@ import torch
 import os
 import onnx
 import onnxscript
+import argparse
+
+
 
 os.environ["XFORMERS_DISABLED"] = "1"
 
-scale = 1.3
-diffusion_rescale_timestep = 8
+# Mapping modality to scale and diffusion_rescale_timestep
+modality_params = {
+    "voxels":      {"scale": 1.5, "steps": 5},
+    "pointcloud":  {"scale": 1.3, "steps": 8},
+    "sv_rgb":      {"scale": 1.8, "steps": 5},
+    "sketch":      {"scale": 1.8, "steps": 5},
+    "sv_depth":    {"scale": 1.8, "steps": 5},
+    "mv_rgb":      {"scale": 1.3, "steps": 5},
+    "mv_depth":    {"scale": 1.3, "steps": 5},
+    "mv_depth_6":  {"scale": 1.5, "steps": 10},
+    "text2_3d":    {"scale": 1.5, "steps": 10},
+}
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Export WaLa model to ONNX for different modalities.")
+    parser.add_argument("--modality", type=str, choices=list(modality_params.keys()), required=True,
+                        help="Choose modality: " + ", ".join(modality_params.keys()))
+    args = parser.parse_args()
 
-### Single_View
-MODEL_CONFIG_URI_SV = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_single_image_udit_1152_32_16/args.json"
-MODEL_CHECKPOINT_URI_SV = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_single_image_udit_1152_32_16/checkpoints/step=step=3250000.ckpt"
+    # Set scale and steps based on modality
+    scale = modality_params[args.modality]["scale"]
+    diffusion_rescale_timestep = modality_params[args.modality]["steps"]
 
+    # Set flags based on argument
+    sv = args.modality.startswith("sv")
+    mv = args.modality.startswith("mv")
+    voxels = args.modality == "voxels"
+    pointcloud = args.modality == "pointcloud"
+    sketch = args.modality == "sketch"
 
-#### Multi_View Depth
-MODEL_CONFIG_URI_MV_depth = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_6_depth_udit_1152_32_16/args.json"
-MODEL_CHECKPOINT_URI_MV_depth = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_6_depth_udit_1152_32_16/checkpoints/step=step=2400000.ckpt"
+    # Model selection (example, adjust as needed)
+    if sv:
+        model_name = 'ADSKAILab/WaLa-SV-1B'
+    elif sketch:
+        model_name = 'ADSKAILab/WaLa-SK-1B'
+    elif mv:
+        model_name = 'ADSKAILab/WaLa-RGB4-1B'
+    elif voxels:
+        model_name = 'ADSKAILab/WaLa-VX16-1B'
+    elif pointcloud:
+        model_name = 'ADSKAILab/WaLa-PC-1B'
+    else:
+        raise ValueError("Unknown or not supported modality")
 
-#### Multi_View RGB 
-MODEL_CONFIG_URI_MV_RGB = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_multiview_udit_1152_32_16/args.json"
-MODEL_CHECKPOINT_URI_MV_RGB = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_multiview_udit_1152_32_16/checkpoints/step=step=2840000.ckpt"
+    print(f"Loading model: {model_name}")
+    model = Model.from_pretrained(model_name)
+    recursively_unwrap_orig_mod(model)
+    model.set_inference_fusion_params(scale, diffusion_rescale_timestep)
 
+    # Prepare dummy input and dynamic_shapes
+    if sv:
+        data_onnx = {
+            'images': torch.zeros((1, 3, 224, 224)),
+            'img_idx': torch.tensor([0], device='cuda:0'),
+            'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),
+            'id': 'dummy'
+        }
+        data_idx = 0
+        
+    elif mv:
+        num_views = 4 
+        data_onnx = {
+            'images': torch.zeros((1, num_views, 3, 224, 224)),
+            'img_idx': torch.tensor([0], device='cuda:0'),
+            'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),
+            'id': 'dummy'
+        }
+        data_idx = 0
+        
+    elif voxels:
+        data_onnx = {
+            'voxels': torch.zeros((1, 1, 16, 16, 16)),
+            'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),
+            'id': 'dummy'
+        }
+        data_idx = 0
+        
+    elif pointcloud:
+        data_onnx = {
+            'Pointcloud': torch.zeros((1, 25000, 3)),
+            'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),
+            'id': 'dummy'
+        }
+        data_idx = 0
+        
 
-### Voxel
-MODEL_CONFIG_URI_Voxel = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_voxel_udit_1152_30_16/args.json"
-MODEL_CHECKPOINT_URI_Voxel = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_voxel_udit_1152_30_16/checkpoints/step=step=3100000.ckpt"
-
-
-### Point Cloud
-MODEL_CONFIG_URI_pointcloud = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_pc_udit_1152_32_16/args.json"
-MODEL_CHECKPOINT_URI_pointcloud = "s3://dream-shape-output-2/Wave_Geometry_Net_all_Wavelet_General_Encoder_Down_2_Wavelet_General_Decoder_Up_2_original_4_1024_1_0.25_256_bior6.8_constant_2_2_2_e_r_0_d_r_0_ema_True_all_batched_threshold_use_sample_training_bf16_1.0_1/filter_pc_udit_1152_32_16/checkpoints/step=step=2600000.ckpt"
-
-
-print(f"Loading model")
-
-
-#model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
-model = Model_internal.from_pretrained(model_config_uri=MODEL_CONFIG_URI_pointcloud,model_checkpoint_uri=MODEL_CHECKPOINT_URI_pointcloud)
-
-def recursively_unwrap_orig_mod(module):
-    """
-    Recursively unwraps all submodules that have an _orig_mod attribute (from torch.compile).
-    """
-    for name, child in module.named_children():
-        if hasattr(child, "_orig_mod"):
-            setattr(module, name, child._orig_mod)
-            recursively_unwrap_orig_mod(getattr(module, name))
-        else:
-            recursively_unwrap_orig_mod(child)
-
-
-# Unwrap all compiled submodules
-recursively_unwrap_orig_mod(model)
-
-
-
-
-model.set_inference_fusion_params(
-        scale, diffusion_rescale_timestep
+    torch.onnx.export(
+        model,
+        (data_onnx, data_idx),
+        f"model_{args.modality}.onnx",
+        export_params=True,
+        opset_version=19,
+        do_constant_folding=True,
+        input_names=['data', 'data_idx'],
+        output_names=['low_pred', 'highs_pred'],
+        verbose=True,
+        dynamo=True,
     )
 
-pointcloud = True
-voxels = False
-sv = False
-mv = False
-
-if sv:
-    data_onnx = {
-        'images': torch.zeros((1, 3, 224, 224)),  # Dummy tensor, for multiview add extra dimension after 1, example 4 image view (1,4,3,224,224)
-        'img_idx': torch.tensor([0], device='cuda:0'),
-        'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),  # Dummy tensor
-        'id': 'dummy'
-    }
-    data_idx = 0
-if mv:
-    data_onnx = {
-        'images': torch.zeros((1, 4, 3, 224, 224)),  # Dummy tensor, for multiview add extra dimension after 1, example 4 image view (1,4,3,224,224)
-        'img_idx': torch.tensor([0], device='cuda:0'),
-        'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),  # Dummy tensor
-        'id': 'dummy'
-    }
-    data_idx = 0
-
-if voxels:
-    data_onnx = {
-        'voxels': torch.zeros((1, 1, 16, 16, 16)),  # Dummy tensor for voxel
-        'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),  # Dummy tensor
-        'id': 'dummy'
-    }
-    data_idx = 0
-
-if pointcloud:
-    data_onnx = {
-        'Pointcloud': torch.zeros((1, 25000, 3)),  # Dummy tensor for point cloud
-        'low': torch.zeros((1, 1, 46, 46, 46), device='cuda:0'),  # Dummy tensor
-        'id': 'dummy'
-    }
-    data_idx = 0
+    # Validate the exported model
+    onnx_model = onnx.load(f"model_{args.modality}.onnx")
+    onnx.checker.check_model(onnx_model)
+    print(f"✅ ONNX model for {args.modality} exported and validated successfully")
 
 
-torch.onnx.export(
-    model,
-    (data_onnx, data_idx),
-    "model_pointcloud.onnx",
-    export_params=True,
-    opset_version=19,
-    do_constant_folding=True,
-    input_names=['data', 'data_idx'],
-    output_names=['low_pred', 'highs_pred'],
-    verbose = True, 
-    dynamo=True,
-    dynamic_shapes=[
-        {
-            # For the 'data' input (a dict), specify dynamic axes for its tensors
-            'Pointcloud': {1: 'num_points'},
-            'low': {},
-            'id': None
-        },
-        # No dynamic shapes for 'data_idx'
-        None,
-    ]
-)
-
-# Validate the exported model
-onnx_model = onnx.load("model_pointcloud.onnx")
-onnx.checker.check_model("model_pointcloud.onnx")
-print("✅ ONNX model exported and validated successfully")
+    
+       # ...existing code...
+    
+    # Example usages:
+    # python Optim/ONNX_Export.py --modality pointcloud
+    # python Optim/ONNX_Export.py --modality voxels
+    # python Optim/ONNX_Export.py --modality sv
+    # python Optim/ONNX_Export.py --modality sketch
+    # python Optim/ONNX_Export.py --modality mv

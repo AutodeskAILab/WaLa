@@ -15,8 +15,7 @@ import boto3
 def download_s3_folder(bucket_name, s3_prefix, local_dir):
     """
     Download all files under a given S3 prefix to a local directory, preserving structure.
-    Eg. download_s3_folder("giuliaa-optim", "/TRT/Google_Dataset_Outputs/10.1/", "/TRT_OBJ/10.1")
-    Args:
+    git add .    Args:
         bucket_name (str): Name of the S3 bucket.
         s3_prefix (str): Prefix (folder path) in the S3 bucket.
         local_dir (str or Path): Local directory to download files into.
@@ -76,10 +75,6 @@ def upload_folder_to_s3(folder_path, bucket_name, s3_prefix=""):
 def upload_files_to_s3(file_paths, bucket_name, s3_prefix=""):
     """
     Uploads a list of files to an S3 bucket.
-    # Example usage:
-    #files = ["model_10.onnx.data", "model_10.onnx"]
-    #upload_files_to_s3(files, "giuliaa-optim", s3_prefix="/ONNX/Steps_10")
-
     Args:
         file_paths (list): List of file paths (str or Path) to upload.
         bucket_name (str): Name of the S3 bucket.
