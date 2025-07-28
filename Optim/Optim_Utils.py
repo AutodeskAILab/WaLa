@@ -15,7 +15,7 @@ import boto3
 def download_s3_folder(bucket_name, s3_prefix, local_dir):
     """
     Download all files under a given S3 prefix to a local directory, preserving structure.
-    git add .    Args:
+    Args:
         bucket_name (str): Name of the S3 bucket.
         s3_prefix (str): Prefix (folder path) in the S3 bucket.
         local_dir (str or Path): Local directory to download files into.
