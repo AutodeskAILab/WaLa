@@ -129,7 +129,18 @@ torch.onnx.export(
     input_names=['data', 'data_idx'],
     output_names=['low_pred', 'highs_pred'],
     verbose = True, 
-    dynamo=True)
+    dynamo=True,
+    dynamic_shapes=[
+        {
+            # For the 'data' input (a dict), specify dynamic axes for its tensors
+            'Pointcloud': {1: 'num_points'},
+            'low': {},
+            'id': None
+        },
+        # No dynamic shapes for 'data_idx'
+        None,
+    ]
+)
 
 # Validate the exported model
 onnx_model = onnx.load("model_pointcloud.onnx")

@@ -1,6 +1,6 @@
-pytorch-lightning==2.1.0
-torch==2.1.2
-torchvision==0.16.2
+pytorch-lightning
+torch
+torchvision
 Pillow
 open3d
 h5py
@@ -10,8 +10,8 @@ ftfy
 regex
 pytorch-wavelets
 PyWavelets
-spconv-cu120
-numpy<2
+#spconv-cu120
+numpy
 setuptools==69.5.1
 einops
 timm
