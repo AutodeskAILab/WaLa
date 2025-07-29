@@ -131,9 +131,6 @@ if __name__ == "__main__":
     onnx.checker.check_model(onnx_model)
     print(f"✅ ONNX model for {args.modality} exported and validated successfully")
 
-
-    
-       # ...existing code...
     
     # Example usages:
     # python Optim/ONNX_Export.py --modality pointcloud
