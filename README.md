@@ -63,10 +63,10 @@ For each object, the left image is the input, the middle is the original WaLa ou
   <tbody>
     <tr>
       <td style="width: 120px;">Single-view</td>
-      <td style="width: 150px;"><img src="figures/Android_Figure.png" style="width:150px; height:150px; object-fit: cover;" alt="android input"/></td>
+      <td style="width: 150px;"><img src="figures/Android_Figure_Chrome.png" style="width:150px; height:150px; object-fit: cover;" alt="android input"/></td>
       <td style="width: 150px;"><img src="figures/android.gif" style="width:150px; height:150px; object-fit: cover;" alt="android original"/></td>
       <td style="width: 100px;">5.52</td>
-      <td style="width: 150px;"><img src="figures/android_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="apple TRT"/></td>
+      <td style="width: 150px;"><img src="figures/android_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="android TRT"/></td>
       <td style="width: 100px;">0.75</td>
     </tr>
     <tr>
