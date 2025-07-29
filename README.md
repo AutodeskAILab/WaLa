@@ -19,9 +19,9 @@ Significant speedups are achieved with ONNX and TensorRT optimizations:
 
 | Model Variant           | Latency (s) | Throughput (items/s) |
 |-------------------------|-------------|----------------------|
-| WaLa                    | 5.52        | 0.18                 |
-| WaLa + Fast Write       | 4.17        | 0.24                 |
-| WaLa + ONNX + TensorRT  | 0.75        | 1.33                 |
+| WaLa                    |     5.52    |         0.18         |
+| WaLa + Fast Write       |     4.17    |         0.24         |
+| WaLa + ONNX + TensorRT  |     0.75    |         1.33         |
 
 *Benchmarks are provided for multiple modalities, including single-view and sketch-to-3D inference.*
 
@@ -43,14 +43,14 @@ For each object, the left image is the input, the middle is the original WaLa ou
 
 <table style="table-layout: fixed; width: 100%; text-align: center; margin: auto;">
   <colgroup>
-    <col style="width: 120px;">  <!-- Modality -->
-    <col style="width: 150px;">  <!-- Input Image -->
-    <col style="width: 150px;">  <!-- Original (WaLa) -->
-    <col style="width: 100px;">  <!-- Original Time -->
-    <col style="width: 150px;">  <!-- Optimized (WaLa + TRT) -->
-    <col style="width: 100px;">  <!-- TRT Time -->
+    <col style="width: 120px;">
+    <col style="width: 150px;">
+    <col style="width: 150px;">
+    <col style="width: 100px;">
+    <col style="width: 150px;">
+    <col style="width: 100px;">
   </colgroup>
-  <thead style="text-align: center;">
+  <thead>
     <tr>
       <th style="width: 120px; text-align: center;">Modality</th>
       <th style="width: 150px; text-align: center;">Input Image</th>
@@ -60,7 +60,7 @@ For each object, the left image is the input, the middle is the original WaLa ou
       <th style="width: 100px; text-align: center;">TRT Time (s)</th>
     </tr>
   </thead>
-  <tbody style="text-align: center;">
+  <tbody>
     <tr>
       <td style="width: 120px; text-align: center;">Single-view</td>
       <td style="width: 150px; text-align: center;">
@@ -69,11 +69,11 @@ For each object, the left image is the input, the middle is the original WaLa ou
       <td style="width: 150px; text-align: center;">
         <img src="figures/android.gif" style="width:150px; height:150px; object-fit: cover;" alt="android original"/>
       </td>
-      <td style="width: 100px; text-align: center;">5.52</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">5.52</div></td>
       <td style="width: 150px; text-align: center;">
         <img src="figures/android_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="android TRT"/>
       </td>
-      <td style="width: 100px; text-align: center;">0.75</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">0.75</div></td>
     </tr>
     <tr>
       <td style="width: 120px; text-align: center;">Multiview</td>
@@ -83,11 +83,11 @@ For each object, the left image is the input, the middle is the original WaLa ou
       <td style="width: 150px; text-align: center;">
         <img src="figures/plane.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane original"/>
       </td>
-      <td style="width: 100px; text-align: center;">6.50</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">6.50</div></td>
       <td style="width: 150px; text-align: center;">
         <img src="figures/plane_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane TRT"/>
       </td>
-      <td style="width: 100px; text-align: center;">1.1</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">1.1</div></td>
     </tr>
     <tr>
       <td style="width: 120px; text-align: center;">Pointcloud</td>
@@ -97,11 +97,11 @@ For each object, the left image is the input, the middle is the original WaLa ou
       <td style="width: 150px; text-align: center;">
         <img src="figures/ring.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring original"/>
       </td>
-      <td style="width: 100px; text-align: center;">9.3</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">9.3</div></td>
       <td style="width: 150px; text-align: center;">
         <img src="figures/ring_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring TRT"/>
       </td>
-      <td style="width: 100px; text-align: center;">1.2</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">1.2</div></td>
     </tr>
     <tr>
       <td style="width: 120px; text-align: center;">Voxels</td>
@@ -111,11 +111,11 @@ For each object, the left image is the input, the middle is the original WaLa ou
       <td style="width: 150px; text-align: center;">
         <img src="figures/horse.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse original"/>
       </td>
-      <td style="width: 100px; text-align: center;">9.5</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">9.5</div></td>
       <td style="width: 150px; text-align: center;">
         <img src="figures/horse_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse TRT"/>
       </td>
-      <td style="width: 100px; text-align: center;">0.6</td>
+      <td style="width: 100px;"><div style="text-align: center; width: 100%;">0.6</div></td>
     </tr>
   </tbody>
 </table>
