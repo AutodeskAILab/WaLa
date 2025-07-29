@@ -43,10 +43,10 @@ For each object, the left image is the input, the middle is the original WaLa ou
 
 | Modality    | Input Image | Original (WaLa) | Optimized (WaLa + TensorRT) | Inference Time (s: Original / TRT) |
 |-------------|-------------|-----------------|-----------------------------|------------------------------------|
-| Single-view | <img src="examples/single_view/apple.jpeg" style="width:200px; height:auto;" alt="apple input"/> | <img src="figures/apple.gif" style="width:200px; height:auto;" alt="apple original"/> | <img src="figures/apple_trt.gif" style="width:200px; height:auto;" alt="apple TRT"/> | 5.52 / 0.75 |
-| Multiview   | <img src="examples/multiview/airplane.jpeg" style="width:200px; height:auto;" alt="airplane input"/> | <img src="figures/plane.gif" style="width:200px; height:auto;" alt="airplane original"/> | <img src="figures/plane_trt.gif" style="width:200px; height:auto;" alt="airplane TRT"/> | 6.50 / 1.1 |
-| Pointcloud  | <img src="figures/ring.png" style="width:200px; height:auto;" alt="ring input"/> | <img src="figures/ring.gif" style="width:200px; height:auto;" alt="ring original"/> | <img src="figures/ring_trt.gif" style="width:200px; height:auto;" alt="ring TRT"/> | 9.3 / 1.2 |
-| Voxels      | <img src="figures/horse.png" style="width:200px; height:auto;" alt="horse input"/> | <img src="figures/horse.gif" style="width:200px; height:auto;" alt="horse original"/> | <img src="figures/horse_trt.gif" style="width:200px; height:auto;" alt="horse TRT"/> | 9.5 / 0.6 |                      |
+| Single-view | <img src="examples/single_view/apple.jpeg" style="width:200px; height:200px;" alt="apple input"/> | <img src="figures/apple.gif" style="width:200px; height:200px;" alt="apple original"/> | <img src="figures/apple_trt.gif" style="width:200px; height:200px;" alt="apple TRT"/> | 5.52 / 0.75 |
+| Multiview   | <img src="figures/airplane.png" style="width:200px; height:200px;" alt="airplane input"/> | <img src="figures/plane.gif" style="width:200px; height:200px;" alt="airplane original"/> | <img src="figures/plane_trt.gif" style="width:200px; height:200px;" alt="airplane TRT"/> | 6.50 / 1.1 |
+| Pointcloud  | <img src="figures/ring.png" style="width:200px; height:200px;" alt="ring input"/> | <img src="figures/ring.gif" style="width:200px; height:200px;" alt="ring original"/> | <img src="figures/ring_trt.gif" style="width:200px; height:200px;" alt="ring TRT"/> | 9.3 / 1.2 |
+| Voxels      | <img src="figures/horse.png" style="width:200px; height:200px;" alt="horse input"/> | <img src="figures/horse.gif" style="width:200px; height:200px;" alt="horse original"/> | <img src="figures/horse_trt.gif" style="width:200px; height:200px;" alt="horse TRT"/> | 9.5 / 0.6 |
 ## Installation
 
 - Python >= 3.10
