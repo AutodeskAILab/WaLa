@@ -56,7 +56,7 @@ For each object, the left image is the input, the middle is the original WaLa ou
       <th style="width: 150px;">Input Image</th>
       <th style="width: 150px;">Original (WaLa)</th>
       <th style="width: 100px;">Original Time (s)</th>
-      <th style="width: 150px;">Optimized (WaLa + TRT)</th>
+      <th style="width: 150px;">Optimized (WaLa)</th>
       <th style="width: 100px;">TRT Time (s)</th>
     </tr>
   </thead>
