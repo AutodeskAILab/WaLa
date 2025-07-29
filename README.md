@@ -43,10 +43,10 @@ For each object, the left image is the input, the middle is the original WaLa ou
 
 | Modality    | Input Image                               | Original (WaLa)         | Optimized (WaLa + TensorRT) | Inference Time (s: Original / TRT) |
 |-------------|-------------------------------------------|-------------------------|-----------------------------|------------------------------------|
-| Single-view | ![](examples/single_view/apple.jpeg)      | ![](figures/apple.gif)  | ![](examples/figures/apple_trt.gif)   | 5.52 / 0.75                        |
-| Multiview   | ![](examples/multiview/airplane.jpeg)         | ![](figures/airplane.gif) | ![](examples/figures/airplane_trt.gif)    | 6.50 / 1.1                        |
-| Pointcloud  | ![](figures/ring.png)       | ![](figures/ring.gif)| ![](examples/figures/ring_trt.gif) | 9.3 / 1.2                        |
-| Voxels      | ![](figures/horse.png)               | ![](figures/horse.gif)   | ![](examples/figures/horse_trt.gif)      | 9.5 / 0.6                         |
+| Single-view | ![](examples/single_view/apple.jpeg)      | ![](figures/apple.gif)  | ![](figures/apple_trt.gif)   | 5.52 / 0.75                        |
+| Multiview   | ![](examples/multiview/airplane.jpeg)         | ![](figures/airplane.gif) | ![](figures/airplane_trt.gif)    | 6.50 / 1.1                        |
+| Pointcloud  | ![](figures/ring.png)       | ![](figures/ring.gif)| ![](figures/ring_trt.gif) | 9.3 / 1.2                        |
+| Voxels      | ![](figures/horse.png)               | ![](figures/horse.gif)   | ![](figures/horse_trt.gif)      | 9.5 / 0.6                         |
 ## Installation
 
 - Python >= 3.10
