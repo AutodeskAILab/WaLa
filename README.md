@@ -50,42 +50,29 @@ For each object, the left image is the input, the middle is the original WaLa ou
   </colgroup>
   <thead>
     <tr>
-      <th>Modality</th>
-      <th>Input Image</th>
-      <th>Original (WaLa)</th>
-      <th>Optimized (WaLa + TensorRT)</th>
-      <th>Inference Time (s: Original / TRT)</th>
+      <th style="width: 120px;">Modality</th>
+      <th style="width: 150px;">Input Image</th>
+      <th style="width: 150px;">Original (WaLa)</th>
+      <th style="width: 150px;">Optimized (WaLa + TensorRT)</th>
+      <th style="width: 200px;">Inference Time (s: Original / TRT)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>Single-view</td>
-      <td><img src="examples/single_view/apple.jpeg" style="width:150px; height:150px; object-fit: cover;" alt="apple input"/></td>
-      <td><img src="figures/apple.gif" style="width:150px; height:150px; object-fit: cover;" alt="apple original"/></td>
-      <td><img src="figures/apple_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="apple TRT"/></td>
-      <td>5.52 / 0.75</td>
+      <td style="width: 120px;">Single-view</td>
+      <td style="width: 150px;"><img src="examples/single_view/apple.jpeg" style="width:150px; height:150px; object-fit: cover;" alt="apple input"/></td>
+      <td style="width: 150px;"><img src="figures/apple.gif" style="width:150px; height:150px; object-fit: cover;" alt="apple original"/></td>
+      <td style="width: 150px;"><img src="figures/apple_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="apple TRT"/></td>
+      <td style="width: 200px;">5.52 / 0.75</td>
     </tr>
     <tr>
-      <td>Multiview</td>
-      <td><img src="figures/airplane.png" style="width:150px; height:150px; object-fit: cover;" alt="airplane input"/></td>
-      <td><img src="figures/plane.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane original"/></td>
-      <td><img src="figures/plane_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane TRT"/></td>
-      <td>6.50 / 1.1</td>
+      <td style="width: 120px;">Multiview</td>
+      <td style="width: 150px;"><img src="figures/airplane.png" style="width:150px; height:150px; object-fit: cover;" alt="airplane input"/></td>
+      <td style="width: 150px;"><img src="figures/plane.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane original"/></td>
+      <td style="width: 150px;"><img src="figures/plane_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane TRT"/></td>
+      <td style="width: 200px;">6.50 / 1.1</td>
     </tr>
-    <tr>
-      <td>Pointcloud</td>
-      <td><img src="figures/ring.png" style="width:150px; height:150px; object-fit: cover;" alt="ring input"/></td>
-      <td><img src="figures/ring.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring original"/></td>
-      <td><img src="figures/ring_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring TRT"/></td>
-      <td>9.3 / 1.2</td>
-    </tr>
-    <tr>
-      <td>Voxels</td>
-      <td><img src="figures/horse.png" style="width:150px; height:150px; object-fit: cover;" alt="horse input"/></td>
-      <td><img src="figures/horse.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse original"/></td>
-      <td><img src="figures/horse_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse TRT"/></td>
-      <td>9.5 / 0.6</td>
-    </tr>
+    <!-- more rows as needed -->
   </tbody>
 </table>
 ## Installation
