@@ -11,11 +11,9 @@ def main():
     parser = argparse.ArgumentParser(description="Convert ONNX model to TensorRT engine.")
     parser.add_argument("--onnx_path", type=str, default="model_pointcloud.onnx", help="Path to ONNX model file")
     parser.add_argument("--engine_path", type=str, default="model_pointcloud.trt", help="Path to save TensorRT engine")
-    parser.add_argument("--onnx_data_path", type=str, default="model_pointcloud.onnx.data", help="Path to ONNX data file")
     args = parser.parse_args()
 
     local_onnx = args.onnx_path
-    local_data = args.onnx_data_path
     trt_engine_path = args.engine_path
 
     # --- CHECK ONNX AND DATA FILES ---
@@ -23,11 +21,6 @@ def main():
         raise FileNotFoundError(f"ONNX model file {local_onnx} does not exist.")
     else:
         print(f"{local_onnx} found.")
-
-    if not os.path.exists(local_data):
-        print(f"Warning: {local_data} not found locally. Continuing without it.")
-    else:
-        print(f"{local_data} found.")
 
     print("ONNX files ready.")
 
@@ -63,8 +56,8 @@ if __name__ == "__main__":
 
 
 # Example usages:
-# python Optim/TRT_Conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
-# python Optim/TRT_Conversion.py --onnx_path model_voxels.onnx --engine_path model_voxels.trt
-# python Optim/TRT_Conversion.py --onnx_path model_sv_rgb.onnx --engine_path model_sv_rgb.trt
-# python Optim/TRT_Conversion.py --onnx_path model_sketch.onnx --engine_path model_sketch.trt
-# python Optim/TRT_Conversion.py --onnx_path model_mv_rgb.onnx --engine_path model_mv_rgb.trt
+# python TRT_Conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
+# python TRT_Conversion.py --onnx_path model_voxels.onnx --engine_path model_voxels.trt
+# python TRT_Conversion.py --onnx_path model_sv.onnx --engine_path model_sv.trt
+# python TRT_Conversion.py --onnx_path model_sketch.onnx --engine_path model_sketch.trt
+# python TRT_Conversion.py --onnx_path model_mv.onnx --engine_path model_mv.trt

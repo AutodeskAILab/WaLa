@@ -302,7 +302,7 @@ if __name__ == "__main__":
 
 
 # Example usages:
-# python Optim/TRT_Run.py --input_dir input_images --save_dir output_objs --engine_path model_singleview.trt --modality singleview
-# python Optim/TRT_Run.py --input_dir input_multiview --save_dir output_objs --engine_path model_multiview.trt --modality multiview
-# python Optim/TRT_Run.py --input_dir input_pointclouds --save_dir output_objs --engine_path model_pointcloud.trt --modality pointcloud
-# python Optim/TRT_Run.py --input_dir input_voxels --save_dir output_objs --engine_path model_voxels.trt --modality voxels
+# python TRT_Run.py --input_dir input_images --save_dir output_objs --engine_path model_singleview.trt --modality singleview
+# python TRT_Run.py --input_dir input_multiview --save_dir output_objs --engine_path model_multiview.trt --modality multiview
+# python TRT_Run.py --input_dir input_pointclouds --save_dir output_objs --engine_path model_pointcloud.trt --modality pointcloud
+# python TRT_Run.py --input_dir input_voxels --save_dir output_objs --engine_path model_voxels.trt --modality voxels

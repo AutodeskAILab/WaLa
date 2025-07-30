@@ -31,13 +31,9 @@ os.environ["XFORMERS_DISABLED"] = "1"
 modality_params = {
     "voxels":      {"scale": 1.5, "steps": 5},
     "pointcloud":  {"scale": 1.3, "steps": 8},
-    "sv_rgb":      {"scale": 1.8, "steps": 5},
+    "sv":      {"scale": 1.8, "steps": 5},
     "sketch":      {"scale": 1.8, "steps": 5},
-    "sv_depth":    {"scale": 1.8, "steps": 5},
-    "mv_rgb":      {"scale": 1.3, "steps": 5},
-    "mv_depth":    {"scale": 1.3, "steps": 5},
-    "mv_depth_6":  {"scale": 1.5, "steps": 10},
-    "text2_3d":    {"scale": 1.5, "steps": 10},
+    "mv":      {"scale": 1.3, "steps": 5},
 }
 
 if __name__ == "__main__":
@@ -49,6 +45,24 @@ if __name__ == "__main__":
     # Set scale and steps based on modality
     scale = modality_params[args.modality]["scale"]
     diffusion_rescale_timestep = modality_params[args.modality]["steps"]
+
+
+    
+    # Reset all condition flags to False first
+    args.use_image_conditions = False
+    args.use_pointcloud_conditions = False
+    args.use_voxel_conditions = False
+    args.use_depth_conditions = False
+    
+    # Set the correct flag based on modality
+    if args.modality in ["sv", "mv", "sketch"]:
+        args.use_image_conditions = True
+    elif args.modality == "pointcloud":
+        args.use_pointcloud_conditions = True
+    elif args.modality == "voxels":
+        args.use_voxel_conditions = True
+    else:
+        raise ValueError("Unknown or unsupported modality")
 
     # Set flags based on argument
     sv = args.modality.startswith("sv")
@@ -73,6 +87,21 @@ if __name__ == "__main__":
 
     print(f"Loading model: {model_name}")
     model = Model.from_pretrained(model_name)
+
+
+
+    def recursively_unwrap_orig_mod(module):
+        """
+        Recursively unwraps all submodules that have an _orig_mod attribute (from torch.compile).
+        """
+        for name, child in module.named_children():
+            if hasattr(child, "_orig_mod"):
+                setattr(module, name, child._orig_mod)
+                recursively_unwrap_orig_mod(getattr(module, name))
+            else:
+                recursively_unwrap_orig_mod(child)
+
+
     recursively_unwrap_orig_mod(model)
     model.set_inference_fusion_params(scale, diffusion_rescale_timestep)
 
@@ -127,8 +156,7 @@ if __name__ == "__main__":
     )
 
     # Validate the exported model
-    onnx_model = onnx.load(f"model_{args.modality}.onnx")
-    onnx.checker.check_model(onnx_model)
+    onnx.checker.check_model(f"model_{args.modality}.onnx")
     print(f"✅ ONNX model for {args.modality} exported and validated successfully")
 
     
