@@ -501,6 +501,9 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
                 condition_features,
                 None,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
         elif (
             hasattr(self.args, "use_voxel_conditions")
             and self.args.use_voxel_conditions
@@ -511,6 +514,9 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
             latent = self.network.inference(
                 condition_features.size(0), condition_features, None
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
         elif (
             hasattr(self.args, "use_depth_conditions")
             and self.args.use_depth_conditions
@@ -526,6 +532,8 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
                 scale=self.args.scale,
                 image_index=img_idx,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         else:
             latent = self.network.inference(
                 low_data[data_idx : data_idx + 1],
@@ -536,6 +544,8 @@ class Trainer_Condition_Network_ORIGINAL(pl.LightningModule):
                 return_wavelet_volume=return_wavelet_volume,
                 progress=progress,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         
         pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
 
@@ -1020,43 +1030,71 @@ class Trainer_Condition_Network(pl.LightningModule):
             print("Latent Diffusion Time", t2-t1,'s')
 
         elif (
+
             hasattr(self.args, "use_pointcloud_conditions")
             and self.args.use_pointcloud_conditions
         ):
+            t0 = time.time()
             condition_features = self.extract_input_features(
                 data, data_type="Pointcloud", is_train=False, to_cuda=True
             )
+            
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
             latent = self.network.inference(
                 condition_features.size(0),
                 condition_features,
                 None,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         elif (
+
             hasattr(self.args, "use_voxel_conditions")
             and self.args.use_voxel_conditions
         ):
+            t0 = time.time()
             condition_features = self.extract_input_features(
                 data, data_type="Voxel", is_train=False, to_cuda=True
             )
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
             latent = self.network.inference(
                 condition_features.size(0), condition_features, None
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         elif (
+
             hasattr(self.args, "use_depth_conditions")
             and self.args.use_depth_conditions
         ):
+            t0 = time.time()
             condition_features = self.extract_input_features(
                 data, data_type="depth", is_train=False, to_cuda=True
             )
             img_idx = self.extract_img_idx(data, data_idx=data_idx)
             print(img_idx)
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
             latent = self.network.inference(
                 condition_features.size(0),
                 condition_features,
                 scale=self.args.scale,
                 image_index=img_idx,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         else:
+                        
+            t0 = time.time()
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
             latent = self.network.inference(
                 low_data[data_idx : data_idx + 1],
                 None,
@@ -1066,6 +1104,8 @@ class Trainer_Condition_Network(pl.LightningModule):
                 return_wavelet_volume=return_wavelet_volume,
                 progress=progress,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         
         pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
 

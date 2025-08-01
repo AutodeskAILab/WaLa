@@ -54,7 +54,6 @@ def main():
 if __name__ == "__main__":
     main()
 
-
 # Example usages:
 # python TRT_Conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
 # python TRT_Conversion.py --onnx_path model_voxels.onnx --engine_path model_voxels.trt

@@ -226,7 +226,7 @@ def batch_extract_highs_from_values(
     highs_values=None,
 ):
     cnt = 0
-    highs_recon = []
+    high_new = None  # Will hold the last computed high_new
     for idx in range(max_depth):
         current_stage = (max_depth - 1) - idx
 
@@ -264,19 +264,20 @@ def batch_extract_highs_from_values(
                 high_indices_idx[:, :, 4]
             )
 
+            # Prepare scatter indices for all dims
+            batch_idx = torch.arange(batch_size, device=device).unsqueeze(1).expand(-1, high_indices_idx.size(1))
+            channel_idx = high_indices_idx[:, :, 1]
+            seven_idx = high_indices_idx[:, :, 0]
+
             # Flatten high_new for scatter
             high_new_flat = high_new.view(batch_size, 1, 7, -1)
 
-            # Use a for-loop for ONNX compatibility
+            # Use scatter_add_ to assign values
             for b in range(batch_size):
-                # Use index_put_ which is ONNX-friendly
-                high_new_flat[b, 0].index_put_(
-                    (high_indices_idx[b, :, 0], flat_indices[b]),
-                    high_values_idx[b],
-                    accumulate=False
-                )
+                high_new_flat[b, 0, seven_idx[b], flat_indices[b]] = high_values_idx[b]
 
             high_new = high_new_flat.view(target_shape)
+
             cnt += indices_len
 
         # Remove padding
@@ -288,9 +289,8 @@ def batch_extract_highs_from_values(
             padding_size : high_new.size(4) - padding_size,
             padding_size : high_new.size(5) - padding_size,
         ]
-        highs_recon.append(high_new)
 
-    return highs_recon
+    return high_new
 
 def padding_high_indices(batch_size, highs_indices):
     batch_size_pad = torch.arange(batch_size, device=highs_indices.device)

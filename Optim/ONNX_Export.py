@@ -31,7 +31,7 @@ os.environ["XFORMERS_DISABLED"] = "1"
 modality_params = {
     "voxels":      {"scale": 1.5, "steps": 5},
     "pointcloud":  {"scale": 1.3, "steps": 8},
-    "sv":      {"scale": 1.8, "steps": 5},
+    "sv":          {"scale": 1.8, "steps": 5},
     "sketch":      {"scale": 1.8, "steps": 5},
     "mv":      {"scale": 1.3, "steps": 5},
 }
@@ -161,8 +161,8 @@ if __name__ == "__main__":
 
     
     # Example usages:
-    # python Optim/ONNX_Export.py --modality pointcloud
-    # python Optim/ONNX_Export.py --modality voxels
-    # python Optim/ONNX_Export.py --modality sv
-    # python Optim/ONNX_Export.py --modality sketch
-    # python Optim/ONNX_Export.py --modality mv
+    # python ONNX_Export.py --modality pointcloud
+    # python ONNX_Export.py --modality voxels
+    # python ONNX_Export.py --modality sv
+    # python ONNX_Export.py --modality sketch
+    # python ONNX_Export.py --modality mv
