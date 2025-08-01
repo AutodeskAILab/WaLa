@@ -137,13 +137,13 @@ For each object, the left image is the input, the middle is the original WaLa ou
 Export the model to ONNX format for the desired modality using the command-line. For example, to export the pointcloud modality:
 
 ```sh
-python Optim/ONNX_Export.py --modality pointcloud
+python Optim/ONNX_Export.py --modality sv
 ```
 
 Other modality examples:
 ```sh
 python Optim/ONNX_Export.py --modality voxels
-python Optim/ONNX_Export.py --modality sv
+python Optim/ONNX_Export.py --modality pointcloud
 python Optim/ONNX_Export.py --modality sketch
 python Optim/ONNX_Export.py --modality mv
 ```
@@ -153,35 +153,35 @@ python Optim/ONNX_Export.py --modality mv
 Convert the exported ONNX model to a TensorRT engine. For example, to convert the pointcloud model:
 
 ```sh
-python Optim/TRT_Conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
+python Optim/TRT_Conversion.py --onnx_path model_sv.onnx --engine_path model_sv.trt
 ```
 
 Other examples:
 ```sh
 python Optim/TRT_Conversion.py --onnx_path model_voxels.onnx --engine_path model_voxels.trt
-python Optim/TRT_Conversion.py --onnx_path model_sv.onnx --engine_path model_sv.trt
+python Optim/TRT_Conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
 python Optim/TRT_Conversion.py --onnx_path model_sketch.onnx --engine_path model_sketch.trt
 python Optim/TRT_Conversion.py --onnx_path model_mv.onnx --engine_path model_mv.trt
 ```
 
 ### Running Inference with TensorRT
 
-Run optimized inference using the TensorRT engine with argparse configuration. For example, to run inference on pointcloud data:
+Run optimized inference using the TensorRT engine with argparse configuration. For example, to run inference on single-view data:
 
 ```sh
-python Optim/TRT_Run.py --input_dir input_pointclouds --save_dir output_objs --engine_path model_pointcloud.trt --modality pointcloud
+python TRT_Run.py --input_dir ../examples/single_view --save_dir ../examples/Test_Gen --engine_path model_sv.trt --modality singleview
 ```
 
 Additional examples:
 ```sh
-# Single-view / Sketch
-python Optim/TRT_Run.py --input_dir input_images --save_dir output_objs --engine_path model_singleview.trt --modality singleview
-
 # Multiview
-python Optim/TRT_Run.py --input_dir input_multiview --save_dir output_objs --engine_path model_multiview.trt --modality multiview
+python TRT_Run.py --input_dir ../examples/multi_view --save_dir ../examples/Test_Gen --engine_path model_mv.trt --modality multiview
+
+# Pointcloud
+python TRT_Run.py --input_dir ../examples/pointcloud --save_dir ../examples/Test_Gen --engine_path model_pointcloud.trt --modality pointcloud
 
 # Voxels
-python Optim/TRT_Run.py --input_dir input_voxels --save_dir output_objs --engine_path model_voxels.trt --modality voxels
+python TRT_Run.py --input_dir ../examples/voxel --save_dir ../examples/Test_Gen --engine_path model_voxels.trt --modality voxels
 ```
 
 ## Citation
