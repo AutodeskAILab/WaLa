@@ -17,6 +17,7 @@ try:
 except:
     XFORMERS_IS_AVAILBLE = False
 
+XFORMERS_IS_AVAILBLE = False # ONNX export does not support xformers yet
 # CrossAttn precision handling
 import os
 

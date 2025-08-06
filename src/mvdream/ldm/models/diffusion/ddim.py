@@ -51,21 +51,21 @@ class DDIMSampler(object):
 
         # calculations for diffusion q(x_t | x_{t-1}) and others
         self.register_buffer(
-            "sqrt_alphas_cumprod", to_torch(np.sqrt(alphas_cumprod.cpu()))
+            "sqrt_alphas_cumprod", to_torch(torch.sqrt(alphas_cumprod.cpu()))
         )
         self.register_buffer(
             "sqrt_one_minus_alphas_cumprod",
-            to_torch(np.sqrt(1.0 - alphas_cumprod.cpu())),
+            to_torch(torch.sqrt(1.0 - alphas_cumprod.cpu())),
         )
         self.register_buffer(
-            "log_one_minus_alphas_cumprod", to_torch(np.log(1.0 - alphas_cumprod.cpu()))
+            "log_one_minus_alphas_cumprod", to_torch(torch.log(1.0 - alphas_cumprod.cpu()))
         )
         self.register_buffer(
-            "sqrt_recip_alphas_cumprod", to_torch(np.sqrt(1.0 / alphas_cumprod.cpu()))
+            "sqrt_recip_alphas_cumprod", to_torch(torch.sqrt(1.0 / alphas_cumprod.cpu()))
         )
         self.register_buffer(
             "sqrt_recipm1_alphas_cumprod",
-            to_torch(np.sqrt(1.0 / alphas_cumprod.cpu() - 1)),
+            to_torch(torch.sqrt(1.0 / alphas_cumprod.cpu() - 1)),
         )
 
         # ddim sampling parameters
@@ -78,7 +78,7 @@ class DDIMSampler(object):
         self.register_buffer("ddim_sigmas", ddim_sigmas)
         self.register_buffer("ddim_alphas", ddim_alphas)
         self.register_buffer("ddim_alphas_prev", ddim_alphas_prev)
-        self.register_buffer("ddim_sqrt_one_minus_alphas", np.sqrt(1.0 - ddim_alphas))
+        self.register_buffer("ddim_sqrt_one_minus_alphas", torch.sqrt(1.0 - ddim_alphas))
         sigmas_for_original_sampling_steps = ddim_eta * torch.sqrt(
             (1 - self.alphas_cumprod_prev)
             / (1 - self.alphas_cumprod)
@@ -208,7 +208,7 @@ class DDIMSampler(object):
         time_range = (
             reversed(range(0, timesteps))
             if ddim_use_original_steps
-            else np.flip(timesteps)
+            else torch.flip(timesteps, dims =[0])
         )
         total_steps = timesteps if ddim_use_original_steps else timesteps.shape[0]
 
@@ -393,13 +393,13 @@ class DDIMSampler(object):
     ):
 
         timesteps = (
-            np.arange(self.ddpm_num_timesteps)
+            torch.arange(self.ddpm_num_timesteps)
             if use_original_steps
             else self.ddim_timesteps
         )
         timesteps = timesteps[:t_start]
 
-        time_range = np.flip(timesteps)
+        time_range = torch.flip(timesteps, dims=[0]) 
         total_steps = timesteps.shape[0]
 
         iterator = tqdm(time_range, desc="Decoding image", total=total_steps)

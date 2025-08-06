@@ -170,7 +170,7 @@ class MVDreamModule(pl.LightningModule):
         )
         x_sample = self.model.decode_first_stage(samples_ddim)
         x_sample = torch.clamp((x_sample + 1.0) / 2.0, min=0.0, max=1.0)
-        x_sample = 255.0 * x_sample.permute(0, 2, 3, 1).cpu().numpy()
+        x_sample = 255.0 * x_sample.permute(0, 2, 3, 1)
         return x_sample
 
     def inference_step(
@@ -209,5 +209,52 @@ class MVDreamModule(pl.LightningModule):
                 guidance_scale=guidance_scale,
                 ddim_discretize=ddim_discretize,
             )
-        images = list(x_sample.astype(np.uint8))
+        images = list(x_sample.cpu().numpy().astype(np.uint8))
         return images, testing_views
+
+      
+    def forward(self, prompt_embedding: torch.Tensor, camera_embedding: torch.Tensor):
+        """
+        A simplified forward pass for ONNX export that accepts pre-computed embeddings.
+        This method is traceable by the ONNX exporter.
+        """
+        num_frames = camera_embedding.shape[0]
+        image_size = 256  # Hard-coded for export
+        guidance_scale = 10.0 # Hard-coded for export
+        step = 50 # Hard-coded for export
+
+        # Create unconditional conditioning
+        uc = self.model.get_learned_conditioning([""]).to(self.device)
+        uc_ = {"context": uc.repeat(num_frames, 1, 1)}
+
+        # Create conditional conditioning
+        c_ = {"context": prompt_embedding.repeat(num_frames, 1, 1)}
+        
+        # Add camera and num_frames to conditioning
+        c_["camera"] = uc_["camera"] = camera_embedding
+        c_["num_frames"] = uc_["num_frames"] = num_frames
+
+        # Define output shape
+        shape = [4, image_size // 8, image_size // 8]
+
+        # Perform sampling
+        samples_ddim, _ = self.sampler.sample(
+            S=step,
+            conditioning=c_,
+            batch_size=num_frames,
+            shape=shape,
+            verbose=False,
+            unconditional_guidance_scale=guidance_scale,
+            unconditional_conditioning=uc_,
+            eta=0.0,
+            ddim_discretize="trailing",
+            x_T=None,
+        )
+
+        # Decode to image
+        x_sample = self.model.decode_first_stage(samples_ddim)
+        x_sample = torch.clamp((x_sample + 1.0) / 2.0, min=0.0, max=1.0)
+        x_sample = 255.0 * x_sample.permute(0, 2, 3, 1)
+        return x_sample
+
+    

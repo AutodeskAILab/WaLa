@@ -18,6 +18,8 @@ except:
     print("No module 'xformers'. Proceeding without it.")
 
 
+XFORMERS_IS_AVAILBLE = False  # force no xformers, ONNX COMPATIBILITY CHANGE
+
 def get_timestep_embedding(timesteps, embedding_dim):
     """
     This matches the implementation in Denoising Diffusion Probabilistic Models:
@@ -265,6 +267,7 @@ class MemoryEfficientCrossAttentionWrapper(MemoryEfficientCrossAttention):
 
 
 def make_attn(in_channels, attn_type="vanilla", attn_kwargs=None):
+
     assert attn_type in [
         "vanilla",
         "vanilla-xformers",
