@@ -1,6 +1,8 @@
+import os
+os.environ["XFORMERS_DISABLED"] = "1"
+
 from pathlib import Path
 import open3d as o3d
-import os
 import sys
 
 sys.path.append(str(Path.cwd().parent))
@@ -25,15 +27,14 @@ import argparse
 
 
 
-os.environ["XFORMERS_DISABLED"] = "1"
-
 # Mapping modality to scale and diffusion_rescale_timestep
 modality_params = {
     "voxels":      {"scale": 1.5, "steps": 5},
     "pointcloud":  {"scale": 1.3, "steps": 8},
     "sv":          {"scale": 1.8, "steps": 5},
     "sketch":      {"scale": 1.8, "steps": 5},
-    "mv":      {"scale": 1.3, "steps": 5},
+    "mv":          {"scale": 1.3, "steps": 5},
+    "mvdream":     {"scale": 1.3, "steps": 5},
 }
 
 if __name__ == "__main__":
@@ -53,7 +54,8 @@ if __name__ == "__main__":
     args.use_pointcloud_conditions = False
     args.use_voxel_conditions = False
     args.use_depth_conditions = False
-    
+    args.use_mv_dream_conditions = False
+
     # Set the correct flag based on modality
     if args.modality in ["sv", "mv", "sketch"]:
         args.use_image_conditions = True
@@ -61,17 +63,20 @@ if __name__ == "__main__":
         args.use_pointcloud_conditions = True
     elif args.modality == "voxels":
         args.use_voxel_conditions = True
+    elif args.modality == "mvdream":
+        args.use_mv_dream_conditions = True
     else:
         raise ValueError("Unknown or unsupported modality")
 
     # Set flags based on argument
-    sv = args.modality.startswith("sv")
-    mv = args.modality.startswith("mv")
+    sv = args.modality == "sv"
+    mv = args.modality == "mv"
     voxels = args.modality == "voxels"
     pointcloud = args.modality == "pointcloud"
     sketch = args.modality == "sketch"
+    mvdream = args.modality == "mvdream"
 
-    # Model selection (example, adjust as needed)
+    # Model selection 
     if sv:
         model_name = 'ADSKAILab/WaLa-SV-1B'
     elif sketch:
@@ -82,13 +87,24 @@ if __name__ == "__main__":
         model_name = 'ADSKAILab/WaLa-VX16-1B'
     elif pointcloud:
         model_name = 'ADSKAILab/WaLa-PC-1B'
+    elif mvdream:
+        model_name = "ADSKAILab/WaLa-MVDream-DM6"
     else:
         raise ValueError("Unknown or not supported modality")
 
     print(f"Loading model: {model_name}")
-    model = Model.from_pretrained(model_name)
 
-
+    # --- Conditional loading only for mvdream ---
+    if mvdream:
+        model = load_mvdream_model(
+            pretrained_model_name_or_path=model_name,
+            device=getattr(args, "device", "cuda:0")
+        )
+        image_transform = None
+    else:
+        model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
+        image_transform = get_image_transform_latent_model()
+        model.set_inference_fusion_params(scale, diffusion_rescale_timestep)
 
     def recursively_unwrap_orig_mod(module):
         """
@@ -103,7 +119,6 @@ if __name__ == "__main__":
 
 
     recursively_unwrap_orig_mod(model)
-    model.set_inference_fusion_params(scale, diffusion_rescale_timestep)
 
     # Prepare dummy input and dynamic_shapes
     if sv:
@@ -140,20 +155,48 @@ if __name__ == "__main__":
             'id': 'dummy'
         }
         data_idx = 0
-        
+    
+    elif mvdream:
+    
+        prompt_text = 'Dummy input'
 
-    torch.onnx.export(
-        model,
-        (data_onnx, data_idx),
-        f"model_{args.modality}.onnx",
-        export_params=True,
-        opset_version=19,
-        do_constant_folding=True,
-        input_names=['data', 'data_idx'],
-        output_names=['low_pred', 'highs_pred'],
-        verbose=True,
-        dynamo=True,
-    )
+        num_of_frames = 6
+        testing_views = [3, 6, 10, 26, 49, 50]
+
+        
+        # Pre-process inputs to get tensors
+        with torch.no_grad():
+            prompt_embedding = model.model.get_learned_conditioning([prompt_text]).to(model.device)
+            camera_embedding = model.setup_camera(num_of_frames, testing_views).to(model.device)
+
+        dummy_inputs = (prompt_embedding, camera_embedding)
+
+    if mvdream:
+        torch.onnx.export(
+            model,
+            dummy_inputs,   
+            f"model_{args.modality}.onnx",
+            export_params=True,
+            opset_version=19,
+            do_constant_folding=True,
+            input_names=['prompt_embedding', 'camera_embedding'],
+            output_names=['images'],
+            verbose=True,
+            dynamo=True,
+        )
+    else:
+        torch.onnx.export(
+            model,
+            (data_onnx, data_idx),
+            f"model_{args.modality}.onnx",
+            export_params=True,
+            opset_version=19,
+            do_constant_folding=True,
+            input_names=['data', 'data_idx'],
+            output_names=['low_pred', 'highs_pred'],
+            verbose=True,
+            dynamo=True,
+        )
 
     # Validate the exported model
     onnx.checker.check_model(f"model_{args.modality}.onnx")

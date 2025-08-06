@@ -10,6 +10,7 @@ import io
 import boto3
 import sys
 import argparse
+from PIL import Image
 
 cuda.init()
 device = cuda.Device(0)
@@ -167,7 +168,7 @@ def run_trt_inference(engine, input_data,stream,context):
 # Main experiment function
 
 def run_tensorrt_experiment(
-    input_dir, save_dir, engine_path, modality="singleview", use_s3=False, multiview=False
+    input_dir, save_dir, engine_path, prompt, modality="singleview", use_s3=False, multiview=False
 ):
     image_transform = get_image_transform_latent_model()
     if use_s3:
@@ -178,7 +179,6 @@ def run_tensorrt_experiment(
         engine = load_engine(engine_path)
 
     results = []
-    input_path = Path(input_dir)
     save_dir = Path(save_dir)
     os.makedirs(save_dir, exist_ok=True)
 
@@ -187,84 +187,22 @@ def run_tensorrt_experiment(
     print(f"Time to create execution context: {time.time() - time_contx:.4f} seconds")
 
     # --- Main loop ---
-    for obj in input_path.iterdir():
-        time_default = time.time()
+    if modality == "mvdream":
+        if not prompt:
+            raise ValueError("A text prompt must be provided for the mvdream modality.")
+
         cuda_driver_context.push()
 
-        if modality == "multiview":
-            for obj_folder in sorted(input_path.iterdir()):
-                if not obj_folder.is_dir():
-                    continue
-                img_files = sorted(list(obj_folder.glob("*.png")))
-                if not img_files:
-                    print(f"No images found in {obj_folder}")
-                    continue
-                # Process images in batches of 4
-                for i in range(0, len(img_files), 4):
-                    batch_files = img_files[i:i+4]
-                    if len(batch_files) < 4:
-                        print(f"Skipping batch starting at {batch_files[0]}: less than 4 images.")
-                        continue
-                    image_views = [int(Path(f).stem) for f in batch_files]
-                    data = get_multiview_data(
-                        image_files=batch_files,
-                        views=image_views,
-                        image_transform=image_transform,
-                        device='cpu'
-                    )
-                    obj_name = obj_folder.name + "_" + "_".join([Path(f).stem for f in batch_files])
-                    inputs = [
-                        data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
-                        data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
-                        data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
-                    ]
-        elif modality == "pointcloud":
-            if not obj.is_file():
-                cuda_driver_context.pop()
-                continue
-            # Assume obj is a .npy file containing pointcloud data
-            data = get_pointcloud_data(
-                pointcloud_file=obj,
-                device='cpu'
-            )   
-            obj_name = obj.stem
-            inputs = [
-                data["Pointcloud"].cpu().numpy() if hasattr(data["Pointcloud"], "cpu") else np.array(data["Pointcloud"]),
-                data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
-                np.array([0], dtype=np.int64)
-            ]
-        elif modality == "voxels":
-            if not obj.is_file():
-                cuda_driver_context.pop()
-                continue
-            # Assume obj is a .npy file containing voxel data
-            data = get_voxel_data_json(
-                voxel_file=obj,
-                voxel_resolution=16,
-                device='cpu'
-            )
-            obj_name = obj.stem
-            inputs = [
-                data["voxels"].cpu().numpy() if hasattr(data["voxels"], "cpu") else np.array(data["voxels"]),
-                data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
-                np.array([0], dtype=np.int64)
-            ]
-        else:  # singleview/sketch
-            if not obj.is_file():
-                cuda_driver_context.pop()
-                continue
-            data = get_singleview_data(
-                image_file=obj,
-                image_transform=image_transform,
-                image_over_white=False,
-                device='cpu'
-            )
-            obj_name = obj.stem
-            inputs = [
-                data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
-                data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
-                data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
-            ]
+        # Prepare input data from prompt
+        data = prompt
+        
+        # The TensorRT engine's input is only the prompt embedding.
+        inputs = [
+            data
+        ]
+        
+        prompt_slug = "".join(filter(str.isalnum, prompt)).lower()[:30]
+        obj_name = f"mvdream_{prompt_slug}"
 
         stream = cuda.Stream()
         start_time = time.time()
@@ -274,43 +212,142 @@ def run_tensorrt_experiment(
         print(f"TensorRT inference time: {inference_time:.4f} seconds")
         results.append({"object": obj_name, "inference_time": inference_time})
         
-        # Convert numpy arrays to torch tensors
-        low_trt = outputs[0]
-        highs_trt = outputs[1:]
-
-        if isinstance(low_trt, np.ndarray):
-            low_trt = torch.from_numpy(low_trt)
-        # Convert each element in highs_trt to tensor if it's a numpy array
-        highs_trt = [
-            torch.from_numpy(h) if isinstance(h, np.ndarray) else h
-            for h in highs_trt
-        ]
-        # If highs_trt is not a list or tuple, wrap it in a list
-        if not isinstance(highs_trt, (list, tuple)):
-            highs_trt = [highs_trt]
-
-        # Print shape or value safely
-        first_high = highs_trt[0]
-        if hasattr(first_high, "size"):
-            print(first_high.size())
-        elif hasattr(first_high, "shape"):
-            print(first_high.shape)
-        else:
-            print(first_high)
-
-        # Move all tensors to the correct device
-        if hasattr(low_trt, "to"):
-            low_trt = low_trt.to('cuda:0')
-        highs_trt = [h.to('cuda:0') if hasattr(h, "to") else h for h in highs_trt]
-        obj_path = str(save_dir / f"{obj_name}_trt.obj")
-        Optim_Utils.save_visualization_obj(
-            obj_name,
-            obj_path=obj_path,
-            samples=(low_trt, highs_trt)
-        )
-        print('Total Inference time with Writing', time.time() - time_default)
-
+        output_images = outputs[0]
+        
+        for i, img_array in enumerate(output_images):
+            img = Image.fromarray(img_array.astype(np.uint8))
+            img_path = save_dir / f"{obj_name}_view_{i}.png"
+            img.save(img_path)
+            print(f"Saved output image to {img_path}")
+            
+        print('Total Inference time with Writing', time.time() - start_time)
         cuda_driver_context.pop()
+    else:
+        input_path = Path(input_dir)
+        for obj in input_path.iterdir():
+            time_default = time.time()
+            cuda_driver_context.push()
+
+            if modality == "multiview":
+                for obj_folder in sorted(input_path.iterdir()):
+                    if not obj_folder.is_dir():
+                        continue
+                    img_files = sorted(list(obj_folder.glob("*.png")))
+                    if not img_files:
+                        print(f"No images found in {obj_folder}")
+                        continue
+                    # Process images in batches of 4
+                    for i in range(0, len(img_files), 4):
+                        batch_files = img_files[i:i+4]
+                        if len(batch_files) < 4:
+                            print(f"Skipping batch starting at {batch_files[0]}: less than 4 images.")
+                            continue
+                        image_views = [int(Path(f).stem) for f in batch_files]
+                        data = get_multiview_data(
+                            image_files=batch_files,
+                            views=image_views,
+                            image_transform=image_transform,
+                            device='cpu'
+                        )
+                        obj_name = obj_folder.name + "_" + "_".join([Path(f).stem for f in batch_files])
+                        inputs = [
+                            data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
+                            data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+                            data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
+                        ]
+            elif modality == "pointcloud":
+                if not obj.is_file():
+                    cuda_driver_context.pop()
+                    continue
+                # Assume obj is a .npy file containing pointcloud data
+                data = get_pointcloud_data(
+                    pointcloud_file=obj,
+                    device='cpu'
+                )   
+                obj_name = obj.stem
+                inputs = [
+                    data["Pointcloud"].cpu().numpy() if hasattr(data["Pointcloud"], "cpu") else np.array(data["Pointcloud"]),
+                    data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+                    np.array([0], dtype=np.int64)
+                ]
+            elif modality == "voxels":
+                if not obj.is_file():
+                    cuda_driver_context.pop()
+                    continue
+                # Assume obj is a .npy file containing voxel data
+                data = get_voxel_data_json(
+                    voxel_file=obj,
+                    voxel_resolution=16,
+                    device='cpu'
+                )
+                obj_name = obj.stem
+                inputs = [
+                    data["voxels"].cpu().numpy() if hasattr(data["voxels"], "cpu") else np.array(data["voxels"]),
+                    data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+                    np.array([0], dtype=np.int64)
+                ]            
+            else:  # singleview/sketch
+                if not obj.is_file():
+                    cuda_driver_context.pop()
+                    continue
+                data = get_singleview_data(
+                    image_file=obj,
+                    image_transform=image_transform,
+                    image_over_white=False,
+                    device='cpu'
+                )
+                obj_name = obj.stem
+                inputs = [
+                    data["images"].cpu().numpy() if hasattr(data["images"], "cpu") else np.array(data["images"]),
+                    data["low"].cpu().numpy() if hasattr(data["low"], "cpu") else np.array(data["low"]),
+                    data["img_idx"].cpu().numpy() if hasattr(data["img_idx"], "cpu") else np.array([data["img_idx"]], dtype=np.int64)
+                ]
+
+            stream = cuda.Stream()
+            start_time = time.time()
+            outputs = run_trt_inference(engine, inputs, stream, context)
+            inference_time = time.time() - start_time
+
+            print(f"TensorRT inference time: {inference_time:.4f} seconds")
+            results.append({"object": obj_name, "inference_time": inference_time})
+            
+            # Convert numpy arrays to torch tensors
+            low_trt = outputs[0]
+            highs_trt = outputs[1:]
+
+            if isinstance(low_trt, np.ndarray):
+                low_trt = torch.from_numpy(low_trt)
+            # Convert each element in highs_trt to tensor if it's a numpy array
+            highs_trt = [
+                torch.from_numpy(h) if isinstance(h, np.ndarray) else h
+                for h in highs_trt
+            ]
+            # If highs_trt is not a list or tuple, wrap it in a list
+            if not isinstance(highs_trt, (list, tuple)):
+                highs_trt = [highs_trt]
+
+            # Print shape or value safely
+            first_high = highs_trt[0]
+            if hasattr(first_high, "size"):
+                print(first_high.size())
+            elif hasattr(first_high, "shape"):
+                print(first_high.shape)
+            else:
+                print(first_high)
+
+            # Move all tensors to the correct device
+            if hasattr(low_trt, "to"):
+                low_trt = low_trt.to('cuda:0')
+            highs_trt = [h.to('cuda:0') if hasattr(h, "to") else h for h in highs_trt]
+            obj_path = str(save_dir / f"{obj_name}_trt.obj")
+            Optim_Utils.save_visualization_obj(
+                obj_name,
+                obj_path=obj_path,
+                samples=(low_trt, highs_trt)
+            )
+            print('Total Inference time with Writing', time.time() - time_default)
+
+            cuda_driver_context.pop()
 
     avg_time = sum(item["inference_time"] for item in results) / len(results) if results else 0
     print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
@@ -319,22 +356,32 @@ def run_tensorrt_experiment(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run inference with TensorRT engine.")
-    parser.add_argument("--input_dir", type=str, required=True, help="Input directory containing data")
+    parser.add_argument("--input_dir", type=str, required=False, help="Input directory containing data")
     parser.add_argument("--save_dir", type=str, required=True, help="Directory to save output objects")
     parser.add_argument("--engine_path", type=str, required=True, help="Path to TensorRT engine file")
-    parser.add_argument("--modality", type=str, choices=["singleview", "multiview", "pointcloud", "voxels"], required=True, help="Modality type")
+    parser.add_argument("--modality", type=str, choices=["singleview", "multiview", "pointcloud", "voxels","mvdream"], required=True, help="Modality type")
+    parser.add_argument("--prompt", type=str, default="generate me a cup", help="Text prompt for mvdream modality.")
+
     args = parser.parse_args()
 
+    # Validate arguments
+    if args.modality != 'mvdream' and not args.input_dir:
+        parser.error("--input_dir is required for modalities other than 'mvdream'.")
+
     try:
+        # Use keyword arguments for clarity and to avoid positional errors
         results = run_tensorrt_experiment(
-            args.input_dir,
-            args.save_dir,
-            args.engine_path,
+            input_dir=args.input_dir,
+            save_dir=args.save_dir,
+            engine_path=args.engine_path,
             modality=args.modality,
+            prompt=args.prompt,
             multiview=(args.modality == "multiview")
         )
     finally:
         cuda_driver_context.pop()
+
+
 
 
 
