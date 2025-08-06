@@ -5,16 +5,16 @@ import time
 import torch
 from pathlib import Path
 import pycuda.driver as cuda
-#import pycuda.autoinit
+import pycuda.autoinit
 import io
 import boto3
 import sys
 import argparse
 from PIL import Image
 
-cuda.init()
-device = cuda.Device(0)
-cuda_driver_context = device.make_context()
+#cuda.init()
+#device = cuda.Device(0)
+#cuda_driver_context = device.make_context()
 
 
 # Add the parent directory to sys.path so 'src' can be imported
@@ -31,6 +31,15 @@ from src.dataset_utils import (
     get_sketch_data
 )
 import Optim_Utils
+
+
+from src.mvdream_utils import load_mvdream_model
+model_name = "ADSKAILab/WaLa-MVDream-DM6"
+model = load_mvdream_model(
+            pretrained_model_name_or_path=model_name,
+            device='cuda:0',
+        )
+
 
 # Load TensorRT engine
 def load_engine(engine_path):
@@ -191,15 +200,16 @@ def run_tensorrt_experiment(
         if not prompt:
             raise ValueError("A text prompt must be provided for the mvdream modality.")
 
-        cuda_driver_context.push()
+        #cuda_driver_context.push()
+        num_of_frames = 6
+        testing_views = [3, 6, 10, 26, 49, 50]
 
-        # Prepare input data from prompt
-        data = prompt
-        
-        # The TensorRT engine's input is only the prompt embedding.
-        inputs = [
-            data
-        ]
+        # Pre-process inputs to get tensors
+        with torch.no_grad():
+            prompt_embedding = model.model.get_learned_conditioning([prompt]).to(model.device).cpu().numpy().astype(np.float32)
+            camera_embedding = model.setup_camera(num_of_frames, testing_views).to(model.device).cpu().numpy().astype(np.float32)
+
+        inputs = (prompt_embedding, camera_embedding)
         
         prompt_slug = "".join(filter(str.isalnum, prompt)).lower()[:30]
         obj_name = f"mvdream_{prompt_slug}"
@@ -221,7 +231,7 @@ def run_tensorrt_experiment(
             print(f"Saved output image to {img_path}")
             
         print('Total Inference time with Writing', time.time() - start_time)
-        cuda_driver_context.pop()
+        #cuda_driver_context.pop()
     else:
         input_path = Path(input_dir)
         for obj in input_path.iterdir():
@@ -257,7 +267,7 @@ def run_tensorrt_experiment(
                         ]
             elif modality == "pointcloud":
                 if not obj.is_file():
-                    cuda_driver_context.pop()
+                    #cuda_driver_context.pop()
                     continue
                 # Assume obj is a .npy file containing pointcloud data
                 data = get_pointcloud_data(
@@ -272,7 +282,7 @@ def run_tensorrt_experiment(
                 ]
             elif modality == "voxels":
                 if not obj.is_file():
-                    cuda_driver_context.pop()
+                    #cuda_driver_context.pop()
                     continue
                 # Assume obj is a .npy file containing voxel data
                 data = get_voxel_data_json(
@@ -288,7 +298,7 @@ def run_tensorrt_experiment(
                 ]            
             else:  # singleview/sketch
                 if not obj.is_file():
-                    cuda_driver_context.pop()
+                    #cuda_driver_context.pop()
                     continue
                 data = get_singleview_data(
                     image_file=obj,
@@ -347,7 +357,7 @@ def run_tensorrt_experiment(
             )
             print('Total Inference time with Writing', time.time() - time_default)
 
-            cuda_driver_context.pop()
+            #cuda_driver_context.pop()
 
     avg_time = sum(item["inference_time"] for item in results) / len(results) if results else 0
     print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
@@ -379,7 +389,8 @@ if __name__ == "__main__":
             multiview=(args.modality == "multiview")
         )
     finally:
-        cuda_driver_context.pop()
+        #cuda_driver_context.pop()
+        pass
 
 
 
