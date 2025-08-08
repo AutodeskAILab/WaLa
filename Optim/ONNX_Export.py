@@ -25,7 +25,23 @@ import onnx
 import onnxscript
 import argparse
 
+import open_clip
 
+###### MVDream Setup
+from src.mvdream.ldm.modules.encoders.modules import FrozenOpenCLIPEmbedder
+from src.mvdream.camera_utils import get_camera, get_camera_build3d
+
+def setup_camera(
+        num_frames = 4,
+        testing_views = [0, 6, 10, 26],
+    ):
+        indices_list = testing_views
+        batch_size = num_frames
+        
+        camera = get_camera_build3d(indices_list)
+        camera = camera.repeat(batch_size // num_frames, 1)
+        return camera
+#####################
 
 # Mapping modality to scale and diffusion_rescale_timestep
 modality_params = {
@@ -156,47 +172,40 @@ if __name__ == "__main__":
         }
         data_idx = 0
     
+   
+
     elif mvdream:
-    
-        prompt_text = 'Dummy input'
-
-        num_of_frames = 6
-        testing_views = [3, 6, 10, 26, 49, 50]
-
         
-        # Pre-process inputs to get tensors
-        with torch.no_grad():
-            prompt_embedding = model.model.get_learned_conditioning([prompt_text]).to(model.device)
-            camera_embedding = model.setup_camera(num_of_frames, testing_views).to(model.device)
-
-        dummy_inputs = (prompt_embedding, camera_embedding)
-
+            prompt_text = 'Dummy input'
+            num_of_frames = 6
+            testing_views = [3, 6, 10, 26, 49, 50]
+            H = 256
+            W = 256
+    
+            # Pre-process inputs to get tensors
+            with torch.no_grad():
+                prompt_tokens = open_clip.tokenize(prompt_text).to(model.device)    # [1, 77], int64
+                uc_tokens = open_clip.tokenize([""]).to(model.device)               # [1, 77], int64
+                camera_embedding = setup_camera(num_of_frames, testing_views).to(model.device)  # [F, cam_dim]
+                x_T = torch.randn(num_of_frames, 4, H // 8, W // 8, device=model.device, dtype=torch.float32)
+    
+            dummy_inputs = (prompt_tokens, uc_tokens, camera_embedding, x_T)
+    
     if mvdream:
-        torch.onnx.export(
-            model,
-            dummy_inputs,   
-            f"model_{args.modality}.onnx",
-            export_params=True,
-            opset_version=19,
-            do_constant_folding=True,
-            input_names=['prompt_embedding', 'camera_embedding'],
-            output_names=['images'],
-            verbose=True,
-            dynamo=True,
-        )
-    else:
-        torch.onnx.export(
-            model,
-            (data_onnx, data_idx),
-            f"model_{args.modality}.onnx",
-            export_params=True,
-            opset_version=19,
-            do_constant_folding=True,
-            input_names=['data', 'data_idx'],
-            output_names=['low_pred', 'highs_pred'],
-            verbose=True,
-            dynamo=True,
-        )
+            model.eval()
+            torch.onnx.export(
+                model,
+                dummy_inputs,
+                f"model_{args.modality}.onnx",
+                export_params=True,
+                opset_version=19,
+                do_constant_folding=False,
+                input_names=['prompt_tokenized', 'uc_tokenized', 'camera_embedding', 'x_T'],
+                output_names=['images'],
+                verbose=True,
+                dynamo=True,
+            )
+
 
     # Validate the exported model
     onnx.checker.check_model(f"model_{args.modality}.onnx")

@@ -5,16 +5,18 @@ import time
 import torch
 from pathlib import Path
 import pycuda.driver as cuda
-import pycuda.autoinit
+#import pycuda.autoinit
 import io
 import boto3
 import sys
 import argparse
 from PIL import Image
 
-#cuda.init()
-#device = cuda.Device(0)
-#cuda_driver_context = device.make_context()
+cuda.init()
+device = cuda.Device(0)
+cuda_driver_context = device.make_context()
+
+device_str = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 
 # Add the parent directory to sys.path so 'src' can be imported
@@ -32,14 +34,22 @@ from src.dataset_utils import (
 )
 import Optim_Utils
 
+###### MVDream Setup
+from src.mvdream.ldm.modules.encoders.modules import FrozenOpenCLIPEmbedder
+from src.mvdream.camera_utils import get_camera, get_camera_build3d
+import open_clip
 
-from src.mvdream_utils import load_mvdream_model
-model_name = "ADSKAILab/WaLa-MVDream-DM6"
-model = load_mvdream_model(
-            pretrained_model_name_or_path=model_name,
-            device='cuda:0',
-        )
-
+def setup_camera(
+        num_frames = 4,
+        testing_views = [0, 6, 10, 26],
+    ):
+        indices_list = testing_views
+        batch_size = num_frames
+        
+        camera = get_camera_build3d(indices_list)
+        camera = camera.repeat(batch_size // num_frames, 1)
+        return camera
+#####################
 
 # Load TensorRT engine
 def load_engine(engine_path):
@@ -72,7 +82,6 @@ def load_engine_from_s3(bucket_name, s3_key):
     logger = trt.Logger(trt.Logger.WARNING)
     runtime = trt.Runtime(logger)
     return runtime.deserialize_cuda_engine(engine_buffer.read())
-
 
 
 # Modern TensorRT inference function using tensor API
@@ -194,6 +203,8 @@ def run_tensorrt_experiment(
     time_contx = time.time()
     context = engine.create_execution_context()
     print(f"Time to create execution context: {time.time() - time_contx:.4f} seconds")
+    
+    time_default = time.time()
 
     # --- Main loop ---
     if modality == "mvdream":
@@ -201,16 +212,36 @@ def run_tensorrt_experiment(
             raise ValueError("A text prompt must be provided for the mvdream modality.")
 
         #cuda_driver_context.push()
+        #torch.cuda.set_device(0)  # or your device index
+
         num_of_frames = 6
         testing_views = [3, 6, 10, 26, 49, 50]
+        # Instantiate the imported embedder to get text embeddings
+        tokens = open_clip.tokenize(prompt)
+        H = 256
+        W = 256
 
-        # Pre-process inputs to get tensors
+         # Prepare ALL required inputs for the engine
         with torch.no_grad():
-            prompt_embedding = model.model.get_learned_conditioning([prompt]).to(model.device).cpu().numpy().astype(np.float32)
-            camera_embedding = model.setup_camera(num_of_frames, testing_views).to(model.device).cpu().numpy().astype(np.float32)
+            prompt_tokens = open_clip.tokenize(prompt)                 # [1,77], int64
+            uc_tokens = open_clip.tokenize([""])                       # [1,77], int64
+            camera_embedding = setup_camera(num_of_frames, testing_views)  # [F, cam_dim], f32
+            x_T = torch.randn(num_of_frames, 4, H//8, W//8)            # [F,4,H/8,W/8], f32
 
-        inputs = (prompt_embedding, camera_embedding)
-        
+            # Convert to numpy with correct dtypes
+            prompt_tokens_np = prompt_tokens.cpu().numpy().astype(np.int64)
+            uc_tokens_np = uc_tokens.cpu().numpy().astype(np.int64)
+            camera_embedding_np = camera_embedding.cpu().numpy().astype(np.float32)
+            x_T_np = x_T.cpu().numpy().astype(np.float32)
+
+        # Build input map by NAME. Adjust keys to match your ONNX export.
+        # Common names used in your exporter: 'prompt_tokenized','uc_tokenized','camera_embedding','x_T'
+        inputs= [
+            prompt_tokens_np,
+            uc_tokens_np,
+            camera_embedding_np,
+            x_T_np,
+        ]
         prompt_slug = "".join(filter(str.isalnum, prompt)).lower()[:30]
         obj_name = f"mvdream_{prompt_slug}"
 
@@ -230,13 +261,13 @@ def run_tensorrt_experiment(
             img.save(img_path)
             print(f"Saved output image to {img_path}")
             
-        print('Total Inference time with Writing', time.time() - start_time)
+        print('Total Inference time with Writing', time.time() - time_default)
         #cuda_driver_context.pop()
     else:
         input_path = Path(input_dir)
         for obj in input_path.iterdir():
-            time_default = time.time()
-            cuda_driver_context.push()
+            #cuda_driver_context.push()
+            torch.cuda.set_device(0)  # or your device index
 
             if modality == "multiview":
                 for obj_folder in sorted(input_path.iterdir()):
@@ -378,6 +409,7 @@ if __name__ == "__main__":
     if args.modality != 'mvdream' and not args.input_dir:
         parser.error("--input_dir is required for modalities other than 'mvdream'.")
 
+
     try:
         # Use keyword arguments for clarity and to avoid positional errors
         results = run_tensorrt_experiment(
@@ -389,7 +421,7 @@ if __name__ == "__main__":
             multiview=(args.modality == "multiview")
         )
     finally:
-        #cuda_driver_context.pop()
+        cuda_driver_context.pop()
         pass
 
 
