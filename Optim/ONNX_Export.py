@@ -116,10 +116,8 @@ if __name__ == "__main__":
             pretrained_model_name_or_path=model_name,
             device=getattr(args, "device", "cuda:0")
         )
-        image_transform = None
     else:
         model = Model.from_pretrained(pretrained_model_name_or_path=model_name)
-        image_transform = get_image_transform_latent_model()
         model.set_inference_fusion_params(scale, diffusion_rescale_timestep)
 
     def recursively_unwrap_orig_mod(module):
@@ -206,6 +204,20 @@ if __name__ == "__main__":
                 dynamo=True,
             )
 
+    else:
+
+            torch.onnx.export(	
+                model,	
+                (data_onnx, data_idx),	
+                f"model_{args.modality}.onnx",	
+                export_params=True,	
+                opset_version=19,	
+                do_constant_folding=True,	
+                input_names=['data', 'data_idx'],	
+                output_names=['low_pred', 'highs_pred'],	
+                verbose=True,	
+                dynamo=True,	
+            )
 
     # Validate the exported model
     onnx.checker.check_model(f"model_{args.modality}.onnx")
