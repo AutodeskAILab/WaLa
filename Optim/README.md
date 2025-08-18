@@ -64,56 +64,56 @@ For each object, the left image is the input, the middle is the original WaLa ou
     <tr>
       <td style="width: 120px; text-align: center;">Single-view</td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/Android_Figure_Chrome.png" style="width:150px; height:150px; object-fit: cover;" alt="android input"/>
+        <img src="../figures/Android_Figure_Chrome.png" style="width:150px; height:150px; object-fit: cover;" alt="android input"/>
       </td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/android.gif" style="width:150px; height:150px; object-fit: cover;" alt="android original"/>
+        <img src="../figures/android.gif" style="width:150px; height:150px; object-fit: cover;" alt="android original"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">5.52</div></td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/android_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="android TRT"/>
+        <img src="../figures/android_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="android TRT"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">0.75</div></td>
     </tr>
     <tr>
       <td style="width: 120px; text-align: center;">Multiview</td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/airplane.png" style="width:150px; height:150px; object-fit: cover;" alt="airplane input"/>
+        <img src="../figures/airplane.png" style="width:150px; height:150px; object-fit: cover;" alt="airplane input"/>
       </td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/plane.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane original"/>
+        <img src="../figures/plane.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane original"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">6.50</div></td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/plane_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane TRT"/>
+        <img src="../figures/plane_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="airplane TRT"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">1.1</div></td>
     </tr>
     <tr>
       <td style="width: 120px; text-align: center;">Pointcloud</td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/ring.png" style="width:150px; height:150px; object-fit: cover;" alt="ring input"/>
+        <img src="../figures/ring.png" style="width:150px; height:150px; object-fit: cover;" alt="ring input"/>
       </td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/ring.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring original"/>
+        <img src="../figures/ring.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring original"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">9.3</div></td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/ring_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring TRT"/>
+        <img src="../figures/ring_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="ring TRT"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">1.2</div></td>
     </tr>
     <tr>
       <td style="width: 120px; text-align: center;">Voxels</td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/horse.png" style="width:150px; height:150px; object-fit: cover;" alt="horse input"/>
+        <img src="../figures/horse.png" style="width:150px; height:150px; object-fit: cover;" alt="horse input"/>
       </td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/horse.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse original"/>
+        <img src="../figures/horse.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse original"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">9.5</div></td>
       <td style="width: 150px; text-align: center;">
-        <img src="figures/horse_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse TRT"/>
+        <img src="../figures/horse_trt.gif" style="width:150px; height:150px; object-fit: cover;" alt="horse TRT"/>
       </td>
       <td style="width: 100px;"><div style="text-align: center; width: 100%;">0.6</div></td>
     </tr>
