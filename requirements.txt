@@ -10,7 +10,7 @@ ftfy
 regex
 pytorch-wavelets
 PyWavelets
-#spconv-cu120
+#spconv-cu121
 numpy
 setuptools==69.5.1
 einops
@@ -27,3 +27,8 @@ omegaconf
 cloudpathlib
 transformers
 open-clip-torch==2.24.0 # https://github.com/kijai/ComfyUI-SUPIR/issues/143
+onnx
+onnxruntime
+onnxscript
+nvidia-tensorrt
+pycuda
