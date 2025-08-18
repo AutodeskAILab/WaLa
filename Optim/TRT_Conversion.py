@@ -60,3 +60,4 @@ if __name__ == "__main__":
 # python TRT_Conversion.py --onnx_path model_sv.onnx --engine_path model_sv.trt
 # python TRT_Conversion.py --onnx_path model_sketch.onnx --engine_path model_sketch.trt
 # python TRT_Conversion.py --onnx_path model_mv.onnx --engine_path model_mv.trt
+# python TRT_Conversion.py --onnx_path model_mvdream.onnx --engine_path model_mvdream.trt

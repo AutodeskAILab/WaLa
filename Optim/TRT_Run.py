@@ -435,6 +435,7 @@ if __name__ == "__main__":
 
 
 # Example usages:
+# python TRT_Run.py --prompt 'Generate me a cup' --save_dir ../examples/Test_Gen --engine_path model_mvdream.trt --modality mvdream
 # python TRT_Run.py --input_dir ../examples/single_view --save_dir ../examples/Test_Gen --engine_path model_sv.trt --modality singleview
 # python TRT_Run.py --input_dir ../examples/multi_view --save_dir ../examples/Test_Gen --engine_path model_mv.trt --modality multiview
 # python TRT_Run.py --input_dir ../examples/pointcloud --save_dir ../examples/Test_Gen --engine_path model_pointcloud.trt --modality pointcloud
