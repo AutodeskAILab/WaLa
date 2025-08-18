@@ -1,28 +1,13 @@
-import os
-import tensorrt as trt
-import numpy as np
 import time
-import torch
 from pathlib import Path
-import pycuda.driver as cuda
-#import pycuda.autoinit
-import io
-import boto3
+from TRT_Run import run_trt_inference, load_engine
+import subprocess
 import sys
-import argparse
+import os
+import numpy as np
+import torch
 from PIL import Image
-
-cuda.init()
-device = cuda.Device(0)
-cuda_driver_context = device.make_context()
-
-# Set the device for PyTorch. This should happen after the context is created.
-if torch.cuda.is_available():
-    torch.cuda.set_device(0)
-
-device_str = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-
-
+import pycuda.driver as cuda
 
 # Add the parent directory to sys.path so 'src' can be imported
 sys.path.append(str(Path.cwd().parent))
@@ -56,159 +41,41 @@ def setup_camera(
         return camera
 #####################
 
-# Load TensorRT engine
-def load_engine(engine_path):
-    logger = trt.Logger(trt.Logger.WARNING)
-    with open(engine_path, "rb") as f:
-        runtime = trt.Runtime(logger)
-        return runtime.deserialize_cuda_engine(f.read())
+
+cuda.init()
+device = cuda.Device(0)
+cuda_driver_context = device.make_context()
 
 
+PROMPTS = [
+    "generate me a cup",
+    "a red car",
+    "a futuristic chair",
+    "a medieval castle",
+    "a flying dragon"
+]
 
-def load_engine_from_s3(bucket_name, s3_key):
-    """
-    Loads a TensorRT engine directly from S3 into memory and checks buffer size.
-    """
+ENGINE_PATH = "model_mvdream.trt"
+SAVE_DIR = "Test"
+MODALITY = "mvdream"
 
-
-    s3 = boto3.client('s3')
-    # Get expected file size from S3
-    obj = s3.head_object(Bucket=bucket_name, Key=s3_key)
-    expected_size = obj['ContentLength']
-
-    engine_buffer = io.BytesIO()
-    s3.download_fileobj(bucket_name, s3_key, engine_buffer)
-    engine_buffer.seek(0)
-    actual_size = len(engine_buffer.getvalue())
-    print(f"S3 engine size: {expected_size} bytes, Downloaded buffer size: {actual_size} bytes")
-    if actual_size != expected_size:
-        raise RuntimeError("Downloaded engine size does not match S3 object size!")
-
-    logger = trt.Logger(trt.Logger.WARNING)
-    runtime = trt.Runtime(logger)
-    return runtime.deserialize_cuda_engine(engine_buffer.read())
-
-
-# Modern TensorRT inference function using tensor API
-def run_trt_inference(engine, input_data,stream,context):
-    """
-    Run inference using TensorRT with modern tensor API
-    
-    Args:
-        engine: TensorRT engine
-        input_data: List of input numpy arrays
-        
-    Returns:
-        List of output numpy arrays
-    """
-
-  
-
-    # Get input and output tensor names
-    input_names = []
-    output_names = []
-    
-    time_input_names = time.time()
-    for i in range(engine.num_io_tensors):
-        name = engine.get_tensor_name(i)
-        if engine.get_tensor_mode(name) == trt.TensorIOMode.INPUT:
-            input_names.append(name)
-        else:
-            output_names.append(name)
-    print(f"Time to get input/output names: {time.time() - time_input_names:.4f} seconds")
-    # Prepare device memory
-    device_memory = []
-    
-    time_handle = time.time()
-    # Handle inputs
-    for i, name in enumerate(input_names):
-        if i >= len(input_data):
-            continue
-            
-        data = input_data[i]
-        
-        # Handle dynamic input shapes
-        if -1 in engine.get_tensor_shape(name):
-            context.set_input_shape(name, data.shape)
-        
-        # Allocate device memory and copy input data
-        mem = cuda.mem_alloc(data.nbytes)
-        cuda.memcpy_htod_async(mem, data, stream)
-        device_memory.append(mem)
-        context.set_tensor_address(name, int(mem))
-    print(f"Time to handle inputs: {time.time() - time_handle:.4f} seconds")
-
-    # Prepare outputs
-    outputs = []
-    output_memory = []
-    
-    time_allocate = time.time()
-    # Allocate output memory
-    for name in output_names:
-        shape = context.get_tensor_shape(name)
-        dtype = trt.nptype(engine.get_tensor_dtype(name))
-        
-        # Allocate device memory for output
-        size = trt.volume(shape) * np.dtype(dtype).itemsize
-        mem = cuda.mem_alloc(size)
-        device_memory.append(mem)
-        output_memory.append(mem)
-        
-        # Set output tensor address
-        context.set_tensor_address(name, int(mem))
-        
-        # Create host output array
-        output = np.empty(shape, dtype=dtype)
-        outputs.append(output)
-    print(f"Time to allocate output memory: {time.time() - time_allocate:.4f} seconds")
-
-    # Run inference
-    time_asyncv3 = time.time()
-    context.execute_async_v3(stream_handle=stream.handle)
-    print(f"Async inference time: {time.time() - time_asyncv3:.4f} seconds")
-
-    time_copy = time.time()
-    # Copy outputs from device to host
-    for i, mem in enumerate(output_memory):
-        cuda.memcpy_dtoh_async(outputs[i], mem, stream)
-    print(f"Time to copy outputs: {time.time() - time_copy:.4f} seconds")
-
-    time_sync = time.time()
-    # Synchronize to ensure all operations are complete
-    stream.synchronize()
-    print(f"Time to synchronize: {time.time() - time_sync:.4f} seconds")
-
-    time_free = time.time()
-    # Free device memory
-    for mem in device_memory:
-        mem.free()
-    print(f"Time to free device memory: {time.time() - time_free:.4f} seconds")
-
-
-    return outputs
-
-
-# Main experiment function
-
-def run_tensorrt_experiment(
-    input_dir, save_dir, engine_path, prompt, modality="singleview", use_s3=False, multiview=False
+def run_tensorrt_experiment_reuse(
+    input_dir, save_dir, engine_path, prompt, modality=MODALITY, use_s3=False, multiview=False, engine=None, context=None
 ):
     image_transform = get_image_transform_latent_model()
     if use_s3:
         raise NotImplementedError("S3 loading is disabled in this version.")
     else:
-        if not os.path.exists(engine_path):
-            raise FileNotFoundError(f"TensorRT engine file {engine_path} does not exist.")
-        engine = load_engine(engine_path)
+        if engine is None:
+            if not os.path.exists(engine_path):
+                raise FileNotFoundError(f"TensorRT engine file {engine_path} does not exist.")
+            engine = load_engine(engine_path)
+        if context is None:
+            context = engine.create_execution_context()
 
     results = []
     save_dir = Path(save_dir)
     os.makedirs(save_dir, exist_ok=True)
-
-    time_contx = time.time()
-    context = engine.create_execution_context()
-    print(f"Time to create execution context: {time.time() - time_contx:.4f} seconds")
-    
 
     # --- Main loop ---
     if modality == "mvdream":
@@ -218,31 +85,24 @@ def run_tensorrt_experiment(
         time_default = time.time()
 
         cuda_driver_context.push()
-        #torch.cuda.set_device(0)  # or your device index
 
         num_of_frames = 6
         testing_views = [3, 6, 10, 26, 49, 50]
-        # Instantiate the imported embedder to get text embeddings
-        tokens = open_clip.tokenize(prompt)
         H = 256
         W = 256
 
-         # Prepare ALL required inputs for the engine
         with torch.no_grad():
-            prompt_tokens = open_clip.tokenize(prompt)                 # [1,77], int64
-            uc_tokens = open_clip.tokenize([""])                       # [1,77], int64
-            camera_embedding = setup_camera(num_of_frames, testing_views)  # [F, cam_dim], f32
-            x_T = torch.randn(num_of_frames, 4, H//8, W//8)            # [F,4,H/8,W/8], f32
+            prompt_tokens = open_clip.tokenize(prompt)
+            uc_tokens = open_clip.tokenize([""])
+            camera_embedding = setup_camera(num_of_frames, testing_views)
+            x_T = torch.randn(num_of_frames, 4, H//8, W//8)
 
-            # Convert to numpy with correct dtypes
             prompt_tokens_np = prompt_tokens.cpu().numpy().astype(np.int64)
             uc_tokens_np = uc_tokens.cpu().numpy().astype(np.int64)
             camera_embedding_np = camera_embedding.cpu().numpy().astype(np.float32)
             x_T_np = x_T.cpu().numpy().astype(np.float32)
 
-        # Build input map by NAME. Adjust keys to match your ONNX export.
-        # Common names used in your exporter: 'prompt_tokenized','uc_tokenized','camera_embedding','x_T'
-        inputs= [
+        inputs = [
             prompt_tokens_np,
             uc_tokens_np,
             camera_embedding_np,
@@ -400,42 +260,127 @@ def run_tensorrt_experiment(
     print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
     return results
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run inference with TensorRT engine.")
-    parser.add_argument("--input_dir", type=str, required=False, help="Input directory containing data")
-    parser.add_argument("--save_dir", type=str, required=True, help="Directory to save output objects")
-    parser.add_argument("--engine_path", type=str, required=True, help="Path to TensorRT engine file")
-    parser.add_argument("--modality", type=str, choices=["singleview", "multiview", "pointcloud", "voxels","mvdream"], required=True, help="Modality type")
-    parser.add_argument("--prompt", type=str, default="generate me a cup", help="Text prompt for mvdream modality.")
-
-    args = parser.parse_args()
-
-    # Validate arguments
-    if args.modality != 'mvdream' and not args.input_dir:
-        parser.error("--input_dir is required for modalities other than 'mvdream'.")
+    avg_time = sum(item["inference_time"] for item in results) / len(results) if results else 0
+    print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
+    return results
 
 
-    try:
-        # Use keyword arguments for clarity and to avoid positional errors
-        results = run_tensorrt_experiment(
-            input_dir=args.input_dir,
-            save_dir=args.save_dir,
-            engine_path=args.engine_path,
-            modality=args.modality,
-            prompt=args.prompt,
-            multiview=(args.modality == "multiview")
+def run_original_experiment(prompt, save_dir, model=None):
+    import time
+    from PIL import Image
+    from pathlib import Path
+    t1 = time.time()
+    num_of_frames = 6
+    testing_views = [3, 6, 10, 26, 49, 50]
+    os.environ['XFORMERS_ENABLED'] = '1'
+
+    images_np, image_views = model.inference_step(prompt=prompt, num_frames=num_of_frames, testing_views=testing_views)
+    images = [Image.fromarray(image) for image in images_np]
+    
+    save_dir = Path(save_dir) / Path("depth_maps")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+
+    for i, img in enumerate(images):
+        prompt_slug = "".join(filter(str.isalnum, prompt)).lower()[:30]
+        obj_name = f"mvdream_{prompt_slug}"
+        img_path = save_dir / f"{obj_name}_view_{i}.png"
+        img.save(img_path)
+    elapsed = time.time() - t1
+    print(f'Prompt: "{prompt}" | Total Inference Time: {elapsed:.4f} s')
+    return elapsed
+
+
+def main():
+    save_dir = Path(SAVE_DIR)
+    (save_dir / "trt").mkdir(parents=True, exist_ok=True)
+    (save_dir / "original").mkdir(parents=True, exist_ok=True)
+    trt_results = []
+    orig_results = []
+    print("Starting inference time test...")
+    
+
+    # --- TRT warmup and context reuse ---
+    print("Loading TRT engine and creating context...")
+    engine = load_engine(ENGINE_PATH)
+    context = engine.create_execution_context()
+
+    # Warmup round
+    print("Running TRT warmup round...")
+    warmup_prompt = "warmup prompt"
+    run_tensorrt_experiment_reuse(
+        input_dir=None,
+        save_dir=save_dir / "trt",
+        engine_path=ENGINE_PATH,
+        prompt=warmup_prompt,
+        modality=MODALITY,
+        engine=engine,
+        context=context
+    )
+
+    # Run all TRT inferences
+    for prompt in PROMPTS:
+        print(f"\nPrompt: {prompt}")
+        print("Running TRT inference...")
+        t0 = time.time()
+        results = run_tensorrt_experiment_reuse(
+            input_dir=None,
+            save_dir=save_dir / "trt",
+            engine_path=ENGINE_PATH,
+            prompt=prompt,
+            modality=MODALITY,
+            engine=engine,
+            context=context
         )
-    finally:
+        trt_time = results[0]["inference_time"] if results else (time.time() - t0)
+        print(f"TRT inference time: {trt_time:.4f} seconds")
+        trt_results.append({
+            "prompt": prompt,
+            "trt_time": trt_time
+        })
+
+    # Release TRT resources and CUDA memory
+    print("\nReleasing TRT resources and CUDA memory...")
+    import gc
+    import torch
+    torch.cuda.empty_cache()
+    gc.collect()
+    try:
         cuda_driver_context.pop()
+    except Exception:
         pass
 
+    # --- Check if the model is available ---
+     # If model is not provided, load it here (do this ONCE outside the loop for fairness)
+    
+    from src.mvdream_utils import load_mvdream_model
+    model = load_mvdream_model(
+        pretrained_model_name_or_path="ADSKAILab/WaLa-MVDream-DM6",
+        device=("cuda:0")
+    )
 
+    # Run all original inferences
+    for prompt in PROMPTS:
+        print(f"\nPrompt: {prompt}")
+        print("Running original inference...")
+        orig_time = run_original_experiment(prompt, save_dir / "original", model=model)
+        print(f"Original inference time: {orig_time:.4f} seconds")
+        orig_results.append({
+            "prompt": prompt,
+            "original_time": orig_time
+        })
 
+    print("\n=== Inference Time Comparison ===")
+    for trt, orig in zip(trt_results, orig_results):
+        print(f"Prompt: {trt['prompt']}")
+        print(f"  TRT:      {trt['trt_time']:.4f} s")
+        print(f"  Original: {orig['original_time']:.4f} s")
+        print()
 
-
-# Example usages:
-# python TRT_Run.py --input_dir ../examples/single_view --save_dir ../examples/Test_Gen --engine_path model_sv.trt --modality singleview
-# python TRT_Run.py --input_dir ../examples/multi_view --save_dir ../examples/Test_Gen --engine_path model_mv.trt --modality multiview
-# python TRT_Run.py --input_dir ../examples/pointcloud --save_dir ../examples/Test_Gen --engine_path model_pointcloud.trt --modality pointcloud
-# python TRT_Run.py --input_dir ../examples/voxel --save_dir ../examples/Test_Gen --engine_path model_voxels.trt --modality voxels
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"Error occurred: {e}")
+    finally:
+        cuda_driver_context.pop()

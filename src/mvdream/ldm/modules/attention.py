@@ -5,19 +5,19 @@ import torch.nn.functional as F
 from torch import nn, einsum
 from einops import rearrange, repeat
 from typing import Optional, Any
-
+import os
 from .diffusionmodules.util import checkpoint
 
+import xformers
+import xformers.ops
 
-try:
-    import xformers
-    import xformers.ops
-
-    XFORMERS_IS_AVAILBLE = True
-except:
+if os.environ.get("XFORMERS_ENABLED", "1") == "0":
     XFORMERS_IS_AVAILBLE = False
+elif os.environ.get("XFORMERS_ENABLED", "1") == "1":
+    XFORMERS_IS_AVAILBLE = True
 
-XFORMERS_IS_AVAILBLE = False # ONNX export does not support xformers yet
+
+
 # CrossAttn precision handling
 import os
 

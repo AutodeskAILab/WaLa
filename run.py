@@ -20,6 +20,8 @@ import argparse
 from PIL import Image
 import time
 
+os.environ['XFORMERS_ENABLED'] = '1'
+
 def simplify_mesh(obj_path, target_num_faces=1000):
     mesh = o3d.io.read_triangle_mesh(obj_path)
     simplified_mesh = mesh.simplify_quadric_decimation(target_num_faces)

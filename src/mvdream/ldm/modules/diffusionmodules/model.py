@@ -5,20 +5,16 @@ import torch.nn as nn
 import numpy as np
 from einops import rearrange
 from typing import Optional, Any
-
+import os
 from ..attention import MemoryEfficientCrossAttention
 
-try:
-    import xformers
-    import xformers.ops
+import xformers
+import xformers.ops
 
-    XFORMERS_IS_AVAILBLE = True
-except:
+if os.environ.get("XFORMERS_ENABLED", "1") == "0":
     XFORMERS_IS_AVAILBLE = False
-    print("No module 'xformers'. Proceeding without it.")
-
-
-XFORMERS_IS_AVAILBLE = False  # force no xformers, ONNX COMPATIBILITY CHANGE
+elif os.environ.get("XFORMERS_ENABLED", "1") == "1":
+    XFORMERS_IS_AVAILBLE = True
 
 def get_timestep_embedding(timesteps, embedding_dim):
     """

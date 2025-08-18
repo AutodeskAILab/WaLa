@@ -31,6 +31,9 @@ import open_clip
 from src.mvdream.ldm.modules.encoders.modules import FrozenOpenCLIPEmbedder
 from src.mvdream.camera_utils import get_camera, get_camera_build3d
 
+os.environ['XFORMERS_ENABLED'] = '0'
+
+
 def setup_camera(
         num_frames = 4,
         testing_views = [0, 6, 10, 26],
