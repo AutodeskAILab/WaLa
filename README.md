@@ -317,8 +317,7 @@ To quickly try out the WaLa models without setting up your local environment, ch
 
 ### Optimized WaLa Inference
 
-Optimized inference using ONNX and TensorRT is supported. All scripts, models, and instructions for optimized inference can be found in the `Optim` folder.  
-Please refer to the README in the `Optim` folder for detailed usage.
+Optimized inference with ONNX and TensorRT is fully supported; all scripts, models, and step-by-step instructions can be found in the `Optim` folder—please refer to its README for detailed usage.
 
 ## Citation
 ```bibtex
