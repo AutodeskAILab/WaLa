@@ -66,8 +66,6 @@ if __name__ == "__main__":
     scale = modality_params[args.modality]["scale"]
     diffusion_rescale_timestep = modality_params[args.modality]["steps"]
 
-
-    
     # Reset all condition flags to False first
     args.use_image_conditions = False
     args.use_pointcloud_conditions = False
@@ -138,7 +136,7 @@ if __name__ == "__main__":
     recursively_unwrap_orig_mod(model)
 
     # Prepare dummy input and dynamic_shapes
-    if sv:
+    if sv or sketch:
         data_onnx = {
             'images': torch.zeros((1, 3, 224, 224)),
             'img_idx': torch.tensor([0], device='cuda:0'),

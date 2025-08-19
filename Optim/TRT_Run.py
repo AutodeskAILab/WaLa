@@ -407,7 +407,7 @@ if __name__ == "__main__":
     parser.add_argument("--input_dir", type=str, required=False, help="Input directory containing data")
     parser.add_argument("--save_dir", type=str, required=True, help="Directory to save output objects")
     parser.add_argument("--engine_path", type=str, required=True, help="Path to TensorRT engine file")
-    parser.add_argument("--modality", type=str, choices=["singleview", "multiview", "pointcloud", "voxels","mvdream"], required=True, help="Modality type")
+    parser.add_argument("--modality", type=str, choices=["singleview", "multiview", "pointcloud", "voxels","mvdream","sketch"], required=True, help="Modality type")
     parser.add_argument("--prompt", type=str, default="generate me a cup", help="Text prompt for mvdream modality.")
 
     args = parser.parse_args()
