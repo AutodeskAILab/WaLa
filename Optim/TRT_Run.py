@@ -5,17 +5,18 @@ import time
 import torch
 from pathlib import Path
 import pycuda.driver as cuda
-#import pycuda.autoinit
+import pycuda.autoinit
 import io
 import boto3
 import sys
 import argparse
 from PIL import Image
 
-cuda.init()
-device = cuda.Device(0)
-cuda_driver_context = device.make_context()
-
+## If CUDA errors occur, try uncommenting the following lines to initialize CUDA and manually create a context.
+#cuda.init()
+#device = cuda.Device(0)
+#cuda_driver_context = device.make_context()
+##
 # Set the device for PyTorch. This should happen after the context is created.
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
@@ -217,7 +218,7 @@ def run_tensorrt_experiment(
         
         time_default = time.time()
 
-        cuda_driver_context.push()
+        #cuda_driver_context.push()
         #torch.cuda.set_device(0)  # or your device index
 
         num_of_frames = 6
@@ -268,11 +269,11 @@ def run_tensorrt_experiment(
             print(f"Saved output image to {img_path}")
             
         print('Total Inference time with Writing', time.time() - time_default)
-        cuda_driver_context.pop()
+        #cuda_driver_context.pop()
     else:
         input_path = Path(input_dir)
         for obj in input_path.iterdir():
-            cuda_driver_context.push()
+            #cuda_driver_context.push()
             time_default = time.time()
 
             if modality == "multiview":
@@ -304,7 +305,7 @@ def run_tensorrt_experiment(
                         ]
             elif modality == "pointcloud":
                 if not obj.is_file():
-                    cuda_driver_context.pop()
+                    #cuda_driver_context.pop()
                     continue
                 # Assume obj is a .npy file containing pointcloud data
                 data = get_pointcloud_data(
@@ -319,7 +320,7 @@ def run_tensorrt_experiment(
                 ]
             elif modality == "voxels":
                 if not obj.is_file():
-                    cuda_driver_context.pop()
+                    #cuda_driver_context.pop()
                     continue
                 # Assume obj is a .npy file containing voxel data
                 data = get_voxel_data_json(
@@ -335,7 +336,7 @@ def run_tensorrt_experiment(
                 ]            
             else:  # singleview/sketch
                 if not obj.is_file():
-                    cuda_driver_context.pop()
+                    #cuda_driver_context.pop()
                     continue
                 data = get_singleview_data(
                     image_file=obj,
@@ -394,7 +395,7 @@ def run_tensorrt_experiment(
             )
             print('Total Inference time with Writing', time.time() - time_default)
 
-            cuda_driver_context.pop()
+            #cuda_driver_context.pop()
 
     avg_time = sum(item["inference_time"] for item in results) / len(results) if results else 0
     print(f"\nAverage TensorRT inference time: {avg_time:.4f} seconds")
@@ -427,7 +428,7 @@ if __name__ == "__main__":
             multiview=(args.modality == "multiview")
         )
     finally:
-        cuda_driver_context.pop()
+        #cuda_driver_context.pop()
         pass
 
 

@@ -151,8 +151,62 @@ class WaveletData(object):
 
         return low, highs
 
+    def convert_low_highs_trt(self):
 
-def batch_extract_highs_from_values_OLD(
+        ### compute the volume if not given
+        if self.wavelet_volume is None:
+            wavelet_volume = self.convert_wavelet_volume()
+        else:
+            wavelet_volume = self.wavelet_volume
+
+        ## extract part
+        low = wavelet_volume[:, :1]  ## extract low volume
+
+        if self.output_stage == 0:  # fill with empty zeros
+            batch_size = low.size(0)
+            highs = batch_extract_highs_from_values_trt(
+                output_stage=self.output_stage,
+                max_depth=self.max_depth,
+                shape_list=self.shape_list,
+                device=low.device,
+                batch_size=batch_size,
+            )
+        else:
+            highs_volume = wavelet_volume[:, 1:]
+
+            output_dim = 8**self.output_stage - 1
+
+            highs_indices = extract_full_indices(
+                device=wavelet_volume.device,
+                max_depth=self.max_depth,
+                shape_list=self.shape_list,
+            )  # N * 511 * 4 (N = 46^3)
+            highs_indices = highs_indices[:, -output_dim:]  # N * O * 4 (N = 46^3)
+
+            # padding
+            batch_size = wavelet_volume.size(0)
+            highs_indices = padding_high_indices(
+                batch_size, highs_indices
+            )  # B * N * O * 5
+
+            ## convert high volume to channel list
+            highs_volume = torch.permute(highs_volume, (0, 2, 3, 4, 1))
+            highs_values = highs_volume.view(batch_size, -1, output_dim)
+
+            ## obtain the highs
+            highs = batch_extract_highs_from_values_trt(
+                output_stage=self.output_stage,
+                max_depth=self.max_depth,
+                shape_list=self.shape_list,
+                device=wavelet_volume.device,
+                highs_indices=highs_indices,
+                highs_values=highs_values,
+                batch_size=batch_size,
+            )
+
+        return low, highs
+
+def batch_extract_highs_from_values(
     output_stage,
     max_depth,
     shape_list,
@@ -216,7 +270,7 @@ def batch_extract_highs_from_values_OLD(
     return highs_recon
 
 
-def batch_extract_highs_from_values(
+def batch_extract_highs_from_values_trt(
     output_stage,
     max_depth,
     shape_list,

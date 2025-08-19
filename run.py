@@ -168,9 +168,11 @@ def generate_3d_object(
     seed_everything(seed, workers=True)
 
     save_dir.mkdir(parents=True, exist_ok=True)
+    image_name = save_dir.stem
+
     model.set_inference_fusion_params(scale, diffusion_rescale_timestep)
     output_path = model.test_inference(
-        data, data_idx, save_dir=save_dir, output_format=output_format
+        data, data_idx,image_name, save_dir=save_dir, output_format=output_format
     )
 
     if output_format == "obj" and target_num_faces:

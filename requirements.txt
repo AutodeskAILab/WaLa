@@ -10,7 +10,7 @@ ftfy
 regex
 pytorch-wavelets
 PyWavelets
-#spconv-cu121
+spconv-cu121
 numpy
 setuptools==69.5.1
 einops
@@ -30,5 +30,5 @@ open-clip-torch==2.24.0 # https://github.com/kijai/ComfyUI-SUPIR/issues/143
 onnx
 onnxruntime
 onnxscript
-nvidia-tensorrt
+tensorrt==10.12.0.36
 pycuda
