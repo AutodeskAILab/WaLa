@@ -179,6 +179,9 @@ Additional examples:
 # Multiview
 python TRT_Run.py --input_dir ../examples/multi_view --save_dir ../examples/Test_Gen --engine_path model_mv.trt --modality multiview
 
+# Sketch
+python TRT_Run.py --input_dir ../examples/sketch --save_dir ../examples/Test_Gen --engine_path model_sketch.trt --modality sketch
+
 # Pointcloud
 python TRT_Run.py --input_dir ../examples/pointcloud --save_dir ../examples/Test_Gen --engine_path model_pointcloud.trt --modality pointcloud
 
