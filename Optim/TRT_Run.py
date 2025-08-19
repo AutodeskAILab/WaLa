@@ -12,11 +12,16 @@ import sys
 import argparse
 from PIL import Image
 
+###
 ## If CUDA errors occur, try uncommenting the following lines to initialize CUDA and manually create a context.
+## Also uncomment the context push and pop if context related issues arise.
+
 #cuda.init()
 #device = cuda.Device(0)
 #cuda_driver_context = device.make_context()
-##
+###
+
+
 # Set the device for PyTorch. This should happen after the context is created.
 if torch.cuda.is_available():
     torch.cuda.set_device(0)
