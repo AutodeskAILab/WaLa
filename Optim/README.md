@@ -10,7 +10,7 @@ This repository provides an enhanced version of WaLa for fast and efficient 3D g
 
 - **ONNX Exporter:** Export WaLa models for cross-platform inference using a command-line interface.
 - **TensorRT Conversion:** Accelerate inference on NVIDIA hardware via an easy-to-use conversion script.
-- **Inference Runner:** Run optimized TensorRT inference with full argparse support.
+- **Inference Runner:** Run optimized TensorRT inference.
 - **Multi-Modality Support:** Operates with several modalities including single-view, multiview, pointcloud, and voxels.
 
 ## Performance
