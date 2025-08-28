@@ -45,9 +45,25 @@ def load_latent_model(
     with open(json_path, "r") as file:
         args = json.load(file, object_hook=DotDict)
 
+    # Load checkpoint manually to patch state_dict if needed
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    state_dict = checkpoint["state_dict"]
+
+    # Patch: Remove _orig_mod. prefix if present (from torch.compile)
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        if k.startswith("autoencoder._orig_mod."):
+            new_state_dict[k.replace("autoencoder._orig_mod.", "autoencoder.")] = v
+        else:
+            new_state_dict[k] = v
+    checkpoint["state_dict"] = new_state_dict
+
+    # Now load the model using the patched checkpoint
     model = Trainer_Condition_Network.load_from_checkpoint(
-        checkpoint_path=checkpoint_path, map_location="cpu", args=args
+        checkpoint_path=checkpoint_path, map_location="cpu", args=args, strict=False
     )
+    # Overwrite model state_dict with patched one (to ensure correct keys)
+    model.load_state_dict(new_state_dict, strict=False)
 
     if hasattr(model, "ema_state_dict") and model.ema_state_dict is not None:
         # load EMA weights
@@ -71,7 +87,6 @@ def load_latent_model(
 
     return model
 
-
 class Model:
 
     @classmethod
@@ -94,6 +109,56 @@ class Model:
         model = load_latent_model(
             json_path,
             checkpoint_path,
+            compile_model=False,
+            device=device,
+        )
+        return model
+
+########################################################
+
+
+import boto3
+from urllib.parse import urlparse
+
+class Model_internal:
+    @classmethod
+    def from_pretrained(
+        cls,
+        model_config_uri: str,
+        model_checkpoint_uri: str,
+        local_dir: str = "/tmp/model_ckpt"
+    ):
+        def is_s3_uri(uri):
+            return uri.startswith("s3://")
+
+        def download_from_s3(s3_uri, local_path):
+            parsed = urlparse(s3_uri)
+            bucket = parsed.netloc
+            key = parsed.path.lstrip("/")
+            s3 = boto3.client('s3')
+            s3.download_file(bucket, key, local_path)
+
+        os.makedirs(local_dir, exist_ok=True)
+
+        # Handle config
+        if is_s3_uri(model_config_uri):
+            local_config_path = os.path.join(local_dir, "args.json")
+            download_from_s3(model_config_uri, local_config_path)
+        else:
+            local_config_path = model_config_uri
+
+        # Handle checkpoint
+        if is_s3_uri(model_checkpoint_uri):
+            local_ckpt_path = os.path.join(local_dir, "checkpoint.ckpt")
+            download_from_s3(model_checkpoint_uri, local_ckpt_path)
+        else:
+            local_ckpt_path = model_checkpoint_uri
+
+        device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+        model = load_latent_model(
+            local_config_path,
+            local_ckpt_path,
             compile_model=False,
             device=device,
         )

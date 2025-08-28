@@ -33,6 +33,7 @@ try:
 
     BICUBIC = InterpolationMode.BICUBIC
 except ImportError:
+    
     BICUBIC = Image.BICUBIC
 
 
@@ -1082,7 +1083,7 @@ def build_model(state_dict: dict):
 class DINO(nn.Module):
     def __init__(self, model_name="dinov2_vitg14"):
         super().__init__()
-        self.dinov2 = torch.hub.load("facebookresearch/dinov2", model_name)
+        self.dinov2 = torch.hub.load("facebookresearch/dinov2", model_name, num_register_tokens=4, interpolate_antialias=False)
 
     def get_image_features(self, image):
         features = self.dinov2.forward_features(image)
@@ -1254,7 +1255,7 @@ def get_clip_model(args):
         input_resolution = 224
         vocab_size = "N/A"
     elif args.clip_model_type == "dino-l-14_reg":
-        clip_model = DINO(model_name="dinov2_vitl14_reg")
+        clip_model = DINO(model_name="dinov2_vitl14")
         clip_preprocess = T.Compose(
             [
                 T.Resize(224),

@@ -48,6 +48,7 @@ from src.latent_model.voxels_network import (
 from src.clip_mod import get_clip_model, tokenize
 from src.latent_model import wavelet_vq_model
 
+import time
 
 def load_ema_state_dict(checkpoint_path, args):
     print(f"Loading model from checkpoint: {checkpoint_path}")
@@ -78,6 +79,7 @@ def load_ema_state_dict(checkpoint_path, args):
 #         logging.error("Failed to load EMA state dict. Autoencoder setup incomplete.")
 
 #     return autoencoder_module.network
+
 
 
 def setup_autoencoder(args):
@@ -412,16 +414,38 @@ class Trainer_Condition_Network(pl.LightningModule):
         # Return pre_quant or post_quant based on the pre_quant flag
         return pre_quant if self.args.pre_quant else post_quant
 
-    def save_visualization_obj(self, obj_path, samples):
+    def save_visualization_obj(self,experiments,image_name, obj_path, samples):
         """Save a visualization object."""
         low, highs = samples
+        t7 = time.time()
         sdf_recon = self.dwt_inverse_3d((low, highs))
+        t8 = time.time()
+        print('Inverse DWT time elapsed', t8- t7,'s')
         vertices, triangles = mcubes.marching_cubes(
             sdf_recon.cpu().detach().numpy()[0, 0], 0.0
         )
+        t9 = time.time()
+        print('mcubes.marching_cubes time', t9-t8, 's')
         vertices = (vertices / self.args.resolution) * 2.0 - 1.0
         triangles = triangles[:, ::-1]
         mcubes.export_obj(vertices, triangles, obj_path)
+        t10 = time.time()
+        print('export obj time', time.time() - t9,'s')
+
+        times_7_9 = {
+            'Inverse DWT time elapsed': t8 - t7,
+            'mcubes.marching_cubes time': t9 - t8,
+            'export obj time': t10 - t9
+        }
+        try:
+
+            for metric_name, value in times_7_9.items():
+                experiments.log_metric(metric_name, value)
+        except:
+            
+            pass
+
+
 
     def save_visualization_sdf(self, obj_path, sdf):
         """Save a visualization SDF."""
@@ -438,17 +462,23 @@ class Trainer_Condition_Network(pl.LightningModule):
         self.network.reset_diffusion_module()
 
     def inference_sample(
-        self, data, data_idx, return_wavelet_volume=False, progress=True
+        self, data, data_idx,experiments, return_wavelet_volume=False, progress=True
     ):
         # Generate prediction and save visualization
 
         low_data = data["low"].type(torch.FloatTensor).to(self.device)
 
         if self.args.use_image_conditions:
+            t0 = time.time()
+
             condition_features = self.extract_input_features(
                 data, data_type="image", is_train=False, to_cuda=True
             )
+           
             img_idx = self.extract_img_idx(data, data_idx=data_idx)
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
 
             latent = self.network.inference(
                 condition_features.size(0),
@@ -456,35 +486,54 @@ class Trainer_Condition_Network(pl.LightningModule):
                 scale=self.args.scale,
                 image_index=img_idx,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
         elif (
             hasattr(self.args, "use_pointcloud_conditions")
             and self.args.use_pointcloud_conditions
         ):
+            t0 = time.time()
             condition_features = self.extract_input_features(
                 data, data_type="Pointcloud", is_train=False, to_cuda=True
             )
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
             latent = self.network.inference(
                 condition_features.size(0),
                 condition_features,
                 None,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
         elif (
             hasattr(self.args, "use_voxel_conditions")
             and self.args.use_voxel_conditions
         ):
+            t0 = time.time()
             condition_features = self.extract_input_features(
                 data, data_type="Voxel", is_train=False, to_cuda=True
             )
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
             latent = self.network.inference(
                 condition_features.size(0), condition_features, None
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
         elif (
             hasattr(self.args, "use_depth_conditions")
             and self.args.use_depth_conditions
         ):
+            t0 = time.time()
             condition_features = self.extract_input_features(
                 data, data_type="depth", is_train=False, to_cuda=True
             )
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
             img_idx = self.extract_img_idx(data, data_idx=data_idx)
             print(img_idx)
             latent = self.network.inference(
@@ -493,6 +542,8 @@ class Trainer_Condition_Network(pl.LightningModule):
                 scale=self.args.scale,
                 image_index=img_idx,
             )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
         else:
             latent = self.network.inference(
                 low_data[data_idx : data_idx + 1],
@@ -503,23 +554,51 @@ class Trainer_Condition_Network(pl.LightningModule):
                 return_wavelet_volume=return_wavelet_volume,
                 progress=progress,
             )
-
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+        
         pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
+
+        t3 = time.time()
+        print('Latent Decoding Time', t3 - t2, 's')
+
         wavelet_data_pred = WaveletData(
             shape_list=self.dwt_sparse_composer.shape_list,
             output_stage=self.args.max_training_level,
             max_depth=self.args.max_depth,
             wavelet_volume=pred,
         )
+
+        t4 = time.time()
+
+        print('Wavelet Preparation Time', t4-t3,'s')
         low_pred, highs_pred = wavelet_data_pred.convert_low_highs()
+        t5 = time.time()
+        print('Low to Highs conversion', t5-t4,'s')
+
+
+        times_1_5 = {'Extract Image': t1-t0,
+         'Latent Diffusion Time': t2-t1,
+         'Latent Decoding Time': t3-t2, 
+         'Wavelet Preparation Time': t4-t3, 
+         'Low to Highs conversion': t5-t4}
+        
+        try:
+            for metric_name, value in times_1_5.items():
+                experiments.log_metric(metric_name, value)        
+        except:
+            pass
 
         return low_pred, highs_pred
 
-    def test_inference(self, data, data_idx, save_dir, output_format="obj"):
+
+
+
+    def test_inference(self, data, data_idx,image_name, save_dir,experiments= None, output_format="obj"):
         file_name = data["id"][data_idx]
         with torch.no_grad():
             low_pred, highs_pred = self.inference_sample(
-                data, data_idx, return_wavelet_volume=False
+                data, data_idx,experiments, return_wavelet_volume=False
             )
 
         if output_format == "sdf":
@@ -527,8 +606,163 @@ class Trainer_Condition_Network(pl.LightningModule):
             self.save_sdf(sdf_path, (low_pred, highs_pred))
             return sdf_path
         else:
-            obj_path = os.path.join(save_dir, f"{file_name}.obj")
-            self.save_visualization_obj(
+            t6 = time.time()
+            obj_path = os.path.join(save_dir, f"{image_name}.obj")
+            self.save_visualization_obj(experiments,image_name,
                 obj_path=obj_path, samples=(low_pred, highs_pred)
             )
+            print('Time to save visualization from high lows to obj', time.time() - t6,'s')
+            time6 = {'Time to save visualization from high lows to obj':time.time() - t6}
+
+            try:
+
+                for metric_name, value in time6.items():
+                    experiments.log_metric(metric_name,value)
+
+            except:
+
+                pass
             return obj_path
+
+
+
+
+    def forward(
+        self, data, data_idx,experiments = None, output_format="obj"
+    ):
+        # Generate prediction and save visualization
+
+        low_data = data["low"].type(torch.FloatTensor).to(self.device)
+
+        if self.args.use_image_conditions:
+            t0 = time.time()
+
+            condition_features = self.extract_input_features(
+                data, data_type="image", is_train=False, to_cuda=True
+            )
+           
+            img_idx = self.extract_img_idx(data, data_idx=data_idx)
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
+            latent = self.network.inference(
+                condition_features.size(0),
+                condition_features,
+                scale=self.args.scale,
+                image_index=img_idx,
+            )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+
+        elif (
+
+            hasattr(self.args, "use_pointcloud_conditions")
+            and self.args.use_pointcloud_conditions
+        ):
+            t0 = time.time()
+            condition_features = self.extract_input_features(
+                data, data_type="Pointcloud", is_train=False, to_cuda=True
+            )
+            
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
+            latent = self.network.inference(
+                condition_features.size(0),
+                condition_features,
+                None,
+            )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+        elif (
+
+            hasattr(self.args, "use_voxel_conditions")
+            and self.args.use_voxel_conditions
+        ):
+            t0 = time.time()
+            condition_features = self.extract_input_features(
+                data, data_type="Voxel", is_train=False, to_cuda=True
+            )
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
+            latent = self.network.inference(
+                condition_features.size(0), condition_features, None
+            )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+        elif (
+
+            hasattr(self.args, "use_depth_conditions")
+            and self.args.use_depth_conditions
+        ):
+            t0 = time.time()
+            condition_features = self.extract_input_features(
+                data, data_type="depth", is_train=False, to_cuda=True
+            )
+            img_idx = self.extract_img_idx(data, data_idx=data_idx)
+            print(img_idx)
+
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+
+            latent = self.network.inference(
+                condition_features.size(0),
+                condition_features,
+                scale=self.args.scale,
+                image_index=img_idx,
+            )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+        else:
+                        
+            t0 = time.time()
+            t1 = time.time()
+            print('Extract Image', t1 - t0, 's')
+            latent = self.network.inference(
+                low_data[data_idx : data_idx + 1],
+                None,
+                None,
+                local_rank=0,
+                current_stage=self.current_stage,
+                return_wavelet_volume=return_wavelet_volume,
+                progress=progress,
+            )
+            t2 = time.time()
+            print("Latent Diffusion Time", t2-t1,'s')
+        
+        pred = self.autoencoder.decode_from_pre_quant(latent[data_idx : data_idx + 1])
+
+        t3 = time.time()
+        print('Latent Decoding Time', t3 - t2, 's')
+
+        wavelet_data_pred = WaveletData(
+            shape_list=self.dwt_sparse_composer.shape_list,
+            output_stage=self.args.max_training_level,
+            max_depth=self.args.max_depth,
+            wavelet_volume=pred,
+        )
+
+        t4 = time.time()
+
+        print('Wavelet Preparation Time', t4-t3,'s')
+        low_pred, highs_pred = wavelet_data_pred.convert_low_highs_trt()
+        t5 = time.time()
+        print('Low to Highs conversion', t5-t4,'s')
+
+
+        times_1_5 = {'Extract Image': t1-t0,
+         'Latent Diffusion Time': t2-t1,
+         'Latent Decoding Time': t3-t2, 
+         'Wavelet Preparation Time': t4-t3, 
+         'Low to Highs conversion': t5-t4}
+        
+        try:
+            for metric_name, value in times_1_5.items():
+                experiments.log_metric(metric_name, value)        
+        except:
+            pass
+
+        return low_pred, highs_pred

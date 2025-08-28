@@ -5,18 +5,16 @@ import torch.nn as nn
 import numpy as np
 from einops import rearrange
 from typing import Optional, Any
-
+import os
 from ..attention import MemoryEfficientCrossAttention
 
-try:
-    import xformers
-    import xformers.ops
+import xformers
+import xformers.ops
 
-    XFORMERS_IS_AVAILBLE = True
-except:
+if os.environ.get("XFORMERS_ENABLED", "1") == "0":
     XFORMERS_IS_AVAILBLE = False
-    print("No module 'xformers'. Proceeding without it.")
-
+elif os.environ.get("XFORMERS_ENABLED", "1") == "1":
+    XFORMERS_IS_AVAILBLE = True
 
 def get_timestep_embedding(timesteps, embedding_dim):
     """
@@ -265,6 +263,7 @@ class MemoryEfficientCrossAttentionWrapper(MemoryEfficientCrossAttention):
 
 
 def make_attn(in_channels, attn_type="vanilla", attn_kwargs=None):
+
     assert attn_type in [
         "vanilla",
         "vanilla-xformers",
@@ -995,7 +994,7 @@ class Upsampler(nn.Module):
 
 
 class Resize(nn.Module):
-    def __init__(self, in_channels=None, learned=False, mode="bilinear"):
+    def __init__(self, in_channels=None, learned=False, mode="bicubic"):
         super().__init__()
         self.with_conv = learned
         self.mode = mode

@@ -315,6 +315,9 @@ python run.py --model_name ADSKAILab/WaLa-DM6-1B --dm6 examples/depth_maps_6/3.p
 
 To quickly try out the WaLa models without setting up your local environment, check out the [Google Colab Demo](https://colab.research.google.com/drive/1XIoeanLjXIDdLow6qxY7cAZ6YZpqY40d?usp=sharing).
 
+### Optimized WaLa Inference
+
+Optimized inference with ONNX and TensorRT is fully supported; all scripts, models, and step-by-step instructions can be found in the `Optim` folder—please refer to its README for detailed usage.
 
 ## Citation
 ```bibtex

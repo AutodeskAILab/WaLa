@@ -122,7 +122,9 @@ class VectorQuantizer2(nn.Module):
         z_q = self.embedding(min_encoding_indices).view(z.shape)
         perplexity = None
         min_encodings = None
-        unique = len(torch.unique(min_encoding_indices))
+
+        #unique = len(torch.unique(min_encoding_indices))
+        unique = min_encoding_indices.shape[0] ########## ONNX Compatibility change
 
         if self.normalize == "l2_norm":
             z_q = self.norm(z_q)

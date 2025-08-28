@@ -50,11 +50,11 @@ def make_beta_schedule(
         timesteps = (
             torch.arange(n_timestep + 1, dtype=torch.float64) / n_timestep + cosine_s
         )
-        alphas = timesteps / (1 + cosine_s) * np.pi / 2
+        alphas = timesteps / (1 + cosine_s) * torch.pi / 2
         alphas = torch.cos(alphas).pow(2)
         alphas = alphas / alphas[0]
         betas = 1 - alphas[1:] / alphas[:-1]
-        betas = np.clip(betas, a_min=0, a_max=0.999)
+        betas = torch.clip(betas, a_min=0, a_max=0.999)
 
     elif schedule == "sqrt_linear":
         betas = torch.linspace(
@@ -75,16 +75,16 @@ def make_ddim_timesteps(
 ):
     if ddim_discr_method == "uniform":
         c = num_ddpm_timesteps // num_ddim_timesteps
-        ddim_timesteps = np.asarray(list(range(0, num_ddpm_timesteps, c)))
+        ddim_timesteps = torch.arange(0, num_ddpm_timesteps, c)
         steps_out = ddim_timesteps + 1
     elif ddim_discr_method == "trailing":
         c = num_ddpm_timesteps // num_ddim_timesteps
-        ddim_timesteps = np.asarray(list(reversed(range(num_ddpm_timesteps, 0, -c))))
+        ddim_timesteps = torch.tensor(list(reversed(range(num_ddpm_timesteps, 0, -c))))
         steps_out = ddim_timesteps - 1  # to match python indexing
     elif ddim_discr_method == "quad":
         ddim_timesteps = (
-            (np.linspace(0, np.sqrt(num_ddpm_timesteps * 0.8), num_ddim_timesteps)) ** 2
-        ).astype(int)
+            (torch.linspace(0, torch.sqrt(num_ddpm_timesteps * 0.8), num_ddim_timesteps)) ** 2
+        ).to(torch.int64)
         steps_out = ddim_timesteps + 1
     else:
         raise NotImplementedError(
@@ -101,10 +101,13 @@ def make_ddim_timesteps(
 def make_ddim_sampling_parameters(alphacums, ddim_timesteps, eta, verbose=True):
     # select alphas for computing the variance schedule
     alphas = alphacums[ddim_timesteps]
-    alphas_prev = np.asarray([alphacums[0]] + alphacums[ddim_timesteps[:-1]].tolist())
-
+    alphas_prev = torch.cat([
+        alphacums[0].unsqueeze(0),
+        alphacums[ddim_timesteps[:-1]]
+    ], dim=0)
+    
     # according the the formula provided in https://arxiv.org/abs/2010.02502
-    sigmas = eta * np.sqrt(
+    sigmas = eta * torch.sqrt(
         (1 - alphas_prev) / (1 - alphas) * (1 - alphas / alphas_prev)
     )
     if verbose:
@@ -134,7 +137,7 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
         t1 = i / num_diffusion_timesteps
         t2 = (i + 1) / num_diffusion_timesteps
         betas.append(min(1 - alpha_bar(t2) / alpha_bar(t1), max_beta))
-    return np.array(betas)
+    return torch.tensor(betas)
 
 
 def extract_into_tensor(a, t, x_shape):

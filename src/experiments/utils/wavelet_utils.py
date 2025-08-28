@@ -151,6 +151,60 @@ class WaveletData(object):
 
         return low, highs
 
+    def convert_low_highs_trt(self):
+
+        ### compute the volume if not given
+        if self.wavelet_volume is None:
+            wavelet_volume = self.convert_wavelet_volume()
+        else:
+            wavelet_volume = self.wavelet_volume
+
+        ## extract part
+        low = wavelet_volume[:, :1]  ## extract low volume
+
+        if self.output_stage == 0:  # fill with empty zeros
+            batch_size = low.size(0)
+            highs = batch_extract_highs_from_values_trt(
+                output_stage=self.output_stage,
+                max_depth=self.max_depth,
+                shape_list=self.shape_list,
+                device=low.device,
+                batch_size=batch_size,
+            )
+        else:
+            highs_volume = wavelet_volume[:, 1:]
+
+            output_dim = 8**self.output_stage - 1
+
+            highs_indices = extract_full_indices(
+                device=wavelet_volume.device,
+                max_depth=self.max_depth,
+                shape_list=self.shape_list,
+            )  # N * 511 * 4 (N = 46^3)
+            highs_indices = highs_indices[:, -output_dim:]  # N * O * 4 (N = 46^3)
+
+            # padding
+            batch_size = wavelet_volume.size(0)
+            highs_indices = padding_high_indices(
+                batch_size, highs_indices
+            )  # B * N * O * 5
+
+            ## convert high volume to channel list
+            highs_volume = torch.permute(highs_volume, (0, 2, 3, 4, 1))
+            highs_values = highs_volume.view(batch_size, -1, output_dim)
+
+            ## obtain the highs
+            highs = batch_extract_highs_from_values_trt(
+                output_stage=self.output_stage,
+                max_depth=self.max_depth,
+                shape_list=self.shape_list,
+                device=wavelet_volume.device,
+                highs_indices=highs_indices,
+                highs_values=highs_values,
+                batch_size=batch_size,
+            )
+
+        return low, highs
 
 def batch_extract_highs_from_values(
     output_stage,
@@ -215,6 +269,82 @@ def batch_extract_highs_from_values(
 
     return highs_recon
 
+
+def batch_extract_highs_from_values_trt(
+    output_stage,
+    max_depth,
+    shape_list,
+    device,
+    batch_size,
+    highs_indices=None,
+    highs_values=None,
+):
+    cnt = 0
+    high_new = None  # Will hold the last computed high_new
+    for idx in range(max_depth):
+        current_stage = (max_depth - 1) - idx
+
+        padding_size = (
+            shape_list[-1][0] * (2**current_stage) - shape_list[idx + 1][0]
+        ) // 2
+        target_shape = (
+            batch_size,
+            1,
+            7,
+            shape_list[idx + 1][0] + padding_size * 2,
+            shape_list[idx + 1][1] + padding_size * 2,
+            shape_list[idx + 1][2] + padding_size * 2,
+        )
+        high_new = torch.zeros(target_shape, device=device)
+
+        if current_stage < output_stage:
+            assert highs_indices.size(0) == highs_values.size(0)
+
+            indices_len = 7 * ((2**current_stage) ** 3)
+            high_values_idx = highs_values[:, :, cnt : cnt + indices_len]
+            high_indices_idx = highs_indices[:, :, cnt : cnt + indices_len]
+
+            # Reshape for scatter
+            high_indices_idx = high_indices_idx.reshape(batch_size, -1, 5).long()
+            high_values_idx = high_values_idx.reshape(batch_size, -1)
+
+            # Compute flattened indices for spatial dims
+            D = high_new.size(3)
+            H = high_new.size(4)
+            W = high_new.size(5)
+            flat_indices = (
+                high_indices_idx[:, :, 2] * H * W +
+                high_indices_idx[:, :, 3] * W +
+                high_indices_idx[:, :, 4]
+            )
+
+            # Prepare scatter indices for all dims
+            batch_idx = torch.arange(batch_size, device=device).unsqueeze(1).expand(-1, high_indices_idx.size(1))
+            channel_idx = high_indices_idx[:, :, 1]
+            seven_idx = high_indices_idx[:, :, 0]
+
+            # Flatten high_new for scatter
+            high_new_flat = high_new.view(batch_size, 1, 7, -1)
+
+            # Use scatter_add_ to assign values
+            for b in range(batch_size):
+                high_new_flat[b, 0, seven_idx[b], flat_indices[b]] = high_values_idx[b]
+
+            high_new = high_new_flat.view(target_shape)
+
+            cnt += indices_len
+
+        # Remove padding
+        high_new = high_new[
+            :,
+            :,
+            :,
+            padding_size : high_new.size(3) - padding_size,
+            padding_size : high_new.size(4) - padding_size,
+            padding_size : high_new.size(5) - padding_size,
+        ]
+
+    return high_new
 
 def padding_high_indices(batch_size, highs_indices):
     batch_size_pad = torch.arange(batch_size, device=highs_indices.device)

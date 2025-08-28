@@ -13,6 +13,8 @@ from src.mvdream.camera_utils import get_camera, get_camera_build3d
 from src.mvdream.ldm.util import instantiate_from_config
 
 
+from src.mvdream.ldm.modules.encoders.modules import FrozenOpenCLIPEmbedder_trt
+
 def enforce_zero_terminal_snr(noise_scheduler):
 
     # Compute alphas_bar_sqrt from alphas
@@ -62,6 +64,7 @@ class MVDreamModule(pl.LightningModule):
         camera_azim: int = 50,
         camera_azim_span: int = 360,
         testing_views: List[int] = [0, 6, 10, 26],
+
     ):
         super().__init__()
         self.model_name = model_name
@@ -89,6 +92,8 @@ class MVDreamModule(pl.LightningModule):
             self.model.load_state_dict(torch.load(self.ckpt_path, map_location="cpu"))
         self.sampler = self.setup_sampler()
         self.model = self.model
+
+        self.embedder = FrozenOpenCLIPEmbedder_trt(layer='penultimate')
 
     @classmethod
     def load_from_checkpoint(cls, checkpoint_path: str, *args, **kwargs):
@@ -170,7 +175,7 @@ class MVDreamModule(pl.LightningModule):
         )
         x_sample = self.model.decode_first_stage(samples_ddim)
         x_sample = torch.clamp((x_sample + 1.0) / 2.0, min=0.0, max=1.0)
-        x_sample = 255.0 * x_sample.permute(0, 2, 3, 1).cpu().numpy()
+        x_sample = 255.0 * x_sample.permute(0, 2, 3, 1)
         return x_sample
 
     def inference_step(
@@ -209,5 +214,53 @@ class MVDreamModule(pl.LightningModule):
                 guidance_scale=guidance_scale,
                 ddim_discretize=ddim_discretize,
             )
-        images = list(x_sample.astype(np.uint8))
+        images = list(x_sample.cpu().numpy().astype(np.uint8))
         return images, testing_views
+
+      
+
+    def forward(
+            self,
+            prompt_tokenized: torch.Tensor,
+            uc_tokenized: torch.Tensor,
+            camera_embedding: torch.Tensor,
+            x_T: torch.Tensor,  # shape: [num_frames, 4, H/8, W/8]
+        ):
+            num_frames = camera_embedding.shape[0]
+            image_size = 256  # Hard-coded for export
+            guidance_scale = 10.0  # Hard-coded for export
+            step = 50  # Hard-coded for export
+    
+            # Embeddings from the same embedder (tokenized inputs)
+            with torch.no_grad():
+                prompt_embedding = self.embedder(prompt_tokenized)        # [B, seq, dim]
+                uc_embedding = self.embedder(uc_tokenized)                # [B, seq, dim]
+    
+            # Conditioning dicts
+            uc_ = {"context": uc_embedding.repeat(num_frames, 1, 1)}
+            c_ = {"context": prompt_embedding.repeat(num_frames, 1, 1)}
+            c_["camera"] = uc_["camera"] = camera_embedding
+            c_["num_frames"] = uc_["num_frames"] = num_frames
+    
+            # Diffusion shape
+            shape = [4, image_size // 8, image_size // 8]
+    
+            # Sampling (provide x_T so ONNX/TRT doesn't rely on RNG)
+            samples_ddim, _ = self.sampler.sample(
+                S=step,
+                conditioning=c_,
+                batch_size=num_frames,
+                shape=shape,
+                verbose=False,
+                unconditional_guidance_scale=guidance_scale,
+                unconditional_conditioning=uc_,
+                eta=0.0,
+                ddim_discretize="trailing",
+                x_T=x_T,  
+            )
+    
+            # Decode to image
+            x_sample = self.model.decode_first_stage(samples_ddim)
+            x_sample = torch.clamp((x_sample + 1.0) / 2.0, 0.0, 1.0)
+            x_sample = 255.0 * x_sample.permute(0, 2, 3, 1)
+            return x_sample

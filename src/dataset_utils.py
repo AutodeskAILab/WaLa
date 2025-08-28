@@ -127,6 +127,46 @@ def get_singleview_data(image_file, image_transform, device, image_over_white=No
 
     return data
 
+def get_singleview_data_trt(image_file, image_transform, image_over_white=None):
+    """
+    Helper to prepare input data for single view conditional generation optimized for TensorRT.
+    Returns data directly in NumPy format ready for TensorRT inference.
+
+    Arguments:
+        image_file:         A str or file object.
+        image_transform:    A function that takes a PIL.Image and returns a torch.tensor.
+        image_over_white:   (optional) Pass True to overlay the input image over a white background
+                            when removing the alpha channel.
+    """
+    if isinstance(image_file, str):
+        file_base_name = osp.basename(image_file).split(".")[0]
+        if image_file.startswith("s3://"):
+            image_file = get_s3_object(image_file)
+    else:
+        file_base_name = uuid.uuid4()
+
+    # Load and transform image
+    image = load_image(image_file, image_over_white=image_over_white)
+    #image_tensor = image_transform(image)  # This returns a tensor
+    
+    
+    # Add batch dimension (equivalent to unsqueeze(0))
+    images = np.expand_dims(np.array(image), axis=0)    
+    img_idx = np.array([0], dtype=np.int64)  # Direct NumPy array
+    
+    # Create zeros directly as NumPy
+    low = np.zeros((1, 1, 46, 46, 46), dtype=np.float32)
+    
+    data = {
+        "images": images,
+        "img_idx": img_idx,
+        "low": low,
+        "id": [file_base_name]
+    }
+    
+    return data
+
+
 
 def get_multiview_data(image_files, views, image_transform, device):
 
@@ -212,7 +252,7 @@ def get_image_transform(args, train_step=False):
         ]
 
     transform = transform + [
-        Resize(args.n_px, interpolation=Image.BICUBIC),
+        Resize(args.n_px, interpolation=Image.BILINEAR),
         CenterCrop(args.n_px),
         ToTensor(),
         Normalize(
