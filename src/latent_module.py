@@ -99,7 +99,7 @@ class Trainer_Geo_Network(pl.LightningModule):
             )  # compiles the model and *step (training/validation/prediction)
         # print(self.network)
 
-### MODIFIED TO LOAD CHECKPOINT SIMPLIFIED (_ORIGINAL)
+
 class Trainer_Condition_Network(pl.LightningModule):
     def __init__(self, args):
         super().__init__()

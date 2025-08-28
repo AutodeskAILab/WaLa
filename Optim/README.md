@@ -137,16 +137,16 @@ For each object, the left image is the input, the middle is the original WaLa ou
 Export the model to ONNX format for the desired modality using the command-line. For example, to export the pointcloud modality:
 
 ```sh
-python Optim/ONNX_Export.py --modality sv
+python Optim/onnx_export.py --modality sv
 ```
 
 Other modality examples:
 ```sh
-python Optim/ONNX_Export.py --modality voxels
-python Optim/ONNX_Export.py --modality pointcloud
-python Optim/ONNX_Export.py --modality sketch
-python Optim/ONNX_Export.py --modality mv
-python Optim/ONNX_Export.py --modality mvdream
+python Optim/onnx_export.py --modality voxels
+python Optim/onnx_export.py --modality pointcloud
+python Optim/onnx_export.py --modality sketch
+python Optim/onnx_export.py --modality mv
+python Optim/onnx_export.py --modality mvdream
 ```
 
 ### TensorRT Engine Conversion
@@ -154,16 +154,16 @@ python Optim/ONNX_Export.py --modality mvdream
 Convert the exported ONNX model to a TensorRT engine. For example, to convert the pointcloud model:
 
 ```sh
-python Optim/TRT_Conversion.py --onnx_path model_sv.onnx --engine_path model_sv.trt
+python Optim/trt_conversion.py --onnx_path model_sv.onnx --engine_path model_sv.trt
 ```
 
 Other examples:
 ```sh
-python Optim/TRT_Conversion.py --onnx_path model_voxels.onnx --engine_path model_voxels.trt
-python Optim/TRT_Conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
-python Optim/TRT_Conversion.py --onnx_path model_sketch.onnx --engine_path model_sketch.trt
-python Optim/TRT_Conversion.py --onnx_path model_mv.onnx --engine_path model_mv.trt
-python Optim/TRT_Conversion.py --onnx_path model_mvdream.onnx --engine_path model_mvdream.trt
+python Optim/trt_conversion.py --onnx_path model_voxels.onnx --engine_path model_voxels.trt
+python Optim/trt_conversion.py --onnx_path model_pointcloud.onnx --engine_path model_pointcloud.trt
+python Optim/trt_conversion.py --onnx_path model_sketch.onnx --engine_path model_sketch.trt
+python Optim/trt_conversion.py --onnx_path model_mv.onnx --engine_path model_mv.trt
+python Optim/trt_conversion.py --onnx_path model_mvdream.onnx --engine_path model_mvdream.trt
 ```
 
 ### Running Inference with TensorRT
@@ -171,25 +171,25 @@ python Optim/TRT_Conversion.py --onnx_path model_mvdream.onnx --engine_path mode
 Run optimized inference using the TensorRT engine with argparse configuration. For example, to run inference on single-view data:
 
 ```sh
-python TRT_Run.py --input_dir ../examples/single_view --save_dir ../examples/Test_Gen --engine_path model_sv.trt --modality singleview
+python trt_run.py --input_dir ../examples/single_view --save_dir ../examples/trt_output --engine_path model_sv.trt --modality singleview
 ```
 
 Additional examples:
 ```sh
 # Multiview
-python TRT_Run.py --input_dir ../examples/multi_view --save_dir ../examples/Test_Gen --engine_path model_mv.trt --modality multiview
+python trt_run.py --input_dir ../examples/multi_view --save_dir ../examples/trt_output --engine_path model_mv.trt --modality multiview
 
 # Sketch
-python TRT_Run.py --input_dir ../examples/sketch --save_dir ../examples/Test_Gen --engine_path model_sketch.trt --modality sketch
+python trt_run.py --input_dir ../examples/sketch --save_dir ../examples/trt_output --engine_path model_sketch.trt --modality sketch
 
 # Pointcloud
-python TRT_Run.py --input_dir ../examples/pointcloud --save_dir ../examples/Test_Gen --engine_path model_pointcloud.trt --modality pointcloud
+python trt_run.py --input_dir ../examples/pointcloud --save_dir ../examples/trt_output --engine_path model_pointcloud.trt --modality pointcloud
 
 # Voxels
-python TRT_Run.py --input_dir ../examples/voxel --save_dir ../examples/Test_Gen --engine_path model_voxels.trt --modality voxels
+python trt_run.py --input_dir ../examples/voxel --save_dir ../examples/trt_output --engine_path model_voxels.trt --modality voxels
 
 # MvDream, text to 6 depth views
-python TRT_Run.py --prompt 'Generate me a cup' --save_dir ../examples/Test_Gen --engine_path model_mvdream.trt --modality mvdream
+python trt_run.py --prompt 'Generate me a cup' --save_dir ../examples/trt_output --engine_path model_mvdream.trt --modality mvdream
 
 ```
 
